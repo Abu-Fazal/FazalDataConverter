@@ -1,0 +1,22 @@
+---
+description: Universal project rules for FazalDataConverter
+globs: "**/*"
+alwaysApply: true
+---
+
+# FazalDataConverter — Cursor Project Rules
+
+Read and follow `RULES.md` in this repository root for complete project rules.
+
+## Source of Truth
+- `PRD.md` for product requirements.
+- `TRD.md` for technical specs.
+- `RULES.md` for universal dev rules.
+
+## Critical Rules
+- Font: Inter only.
+- Colors: PRD Section 10.5 and TRD Section 5 design tokens only.
+- Security: No macro/script execution. 50 MB limit. Zod validation. Server-side ownership checks.
+- Code: 2-space indent. PascalCase components. ESLint + Prettier.
+- Language: English only in all code and docs.
+- Never invent features outside PRD.md or TRD.md.
