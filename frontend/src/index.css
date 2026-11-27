@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #F8F9FC;
+    color: #151525;
+  }
+}
+
+/* Antigravity Gradient Accents */
+.bg-gradient-brand {
+  background: linear-gradient(120deg, #4F46E5 0%, #7C3AED 48%, #A855F7 100%);
+}
+
+.bg-gradient-brand-hover {
+  background: linear-gradient(120deg, #4338CA 0%, #6D28D9 48%, #9333EA 100%);
+}

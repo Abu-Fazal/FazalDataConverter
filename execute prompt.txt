@@ -1,0 +1,8 @@
+Read STATE.md, RULES.md, PRD.md, and TRD.md.
+Identify the next uncompleted chunk.
+Execute ONLY that specific chunk: [Insert Chunk ID e.g., Chunk 1.1].
+Do not touch any other chunks.
+After finishing:
+1. Verify the code runs without errors.
+2. Mark that chunk as [x] in STATE.md.
+3. Stop and ask for my review.
