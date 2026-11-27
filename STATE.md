@@ -8,10 +8,10 @@ Whenever an agent starts a new session, it reads this file first to know exactly
 
 ## 📌 Overall Project Status
 
-- **Current Phase:** Phase 4 (Authentication & Roles)
-- **Active Task:** Chunk 4.3 (Server-Side Ownership Validation) — DONE
-- **Completed Steps:** 15 / 24 Chunks
-- **Last Updated By:** Cline (Chunk 4.3 Complete)
+- **Current Phase:** Phase 5 (Frontend UI & Figma Matching)
+- **Active Task:** Chunk 5.5 (Admin Dashboard) — DONE
+- **Completed Steps:** 20 / 24 Chunks
+- **Last Updated By:** Cline (Chunk 5.5 Complete)
 
 ---
 
@@ -41,11 +41,11 @@ Whenever an agent starts a new session, it reads this file first to know exactly
 - [x] **Chunk 4.3:** Server-side ownership validation (`userId`) on all protected routes.
 
 ### Phase 5: Frontend UI & Figma Matching (Chunks 16 – 20)
-- [ ] **Chunk 5.1:** Core UI primitives (shadcn/ui + Radix UI + Navbar + Footer).
-- [ ] **Chunk 5.2:** Main Converter screen (Dropzone, mode toggle, sheet selector modal).
-- [ ] **Chunk 5.3:** Conversion progress indicator & error report screens.
-- [ ] **Chunk 5.4:** User History & File Management screen (TanStack Table).
-- [ ] **Chunk 5.5:** Admin Dashboard (Health metrics, failed jobs, immutable security logs).
+- [x] **Chunk 5.1:** Core UI primitives (shadcn/ui + Radix UI + Navbar + Footer).
+- [x] **Chunk 5.2:** Main Converter screen (Dropzone, mode toggle, sheet selector modal).
+- [x] **Chunk 5.3:** Conversion progress indicator & error report screens.
+- [x] **Chunk 5.4:** User History & File Management screen (TanStack Table).
+- [x] **Chunk 5.5:** Admin Dashboard (Health metrics, failed jobs, immutable security logs).
 
 ### Phase 6: Testing, Polish & Production Deploy (Chunks 21 – 24)
 - [ ] **Chunk 6.1:** Unit tests (Vitest) for conversion engines & AST parser.
