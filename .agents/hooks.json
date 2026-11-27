@@ -1,0 +1,17 @@
+{
+  "safety-guardrails": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command|write_file|edit_file|read_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ./scripts/guardrail_check.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
