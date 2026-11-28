@@ -14,6 +14,10 @@ function readJson(relativePath) {
 describe('Vercel frontend project (repository root)', () => {
   const config = readJson('vercel.json');
 
+  it('installs with fresh platform resolution to avoid the npm optional-deps lockfile bug', () => {
+    expect(config.installCommand).toContain('--package-lock=false');
+  });
+
   it('builds the frontend workspace and serves frontend/dist', () => {
     expect(config.buildCommand).toContain('frontend');
     expect(config.outputDirectory).toBe('frontend/dist');
