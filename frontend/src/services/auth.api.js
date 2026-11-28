@@ -22,6 +22,15 @@ export const authApi = {
     return { success: false };
   },
 
+  adminLogin: async (email, password) => {
+    const res = await post('/auth/admin/login', { email, password });
+    if (res?.success && res.user) {
+      window.sessionStorage.setItem('fdc-user', JSON.stringify(res.user));
+      return { success: true, user: res.user };
+    }
+    return { success: false };
+  },
+
   getCurrentUser: async () => {
     try {
       const res = await get('/auth/me');

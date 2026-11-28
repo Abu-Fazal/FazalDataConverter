@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   User,
+  UserCog,
   X,
 } from 'lucide-react';
 import {
@@ -113,6 +114,12 @@ export function Navbar() {
 
   const displayName = user?.name || user?.email || 'Account';
   const initial = displayName.charAt(0).toUpperCase();
+  const links = user
+    ? [...primaryLinks, { name: 'Account', href: '/account', icon: UserCog }]
+    : primaryLinks;
+  const mobileLinks = user
+    ? [...drawerLinks, { name: 'Account Settings', href: '/account', icon: UserCog }]
+    : drawerLinks;
 
   const wordmark = (
     <span className="text-base font-bold tracking-tight text-text-primary sm:text-lg">
@@ -149,7 +156,7 @@ export function Navbar() {
           className="hidden items-center gap-1.5 rounded-xl border border-border-subtle bg-surface-app p-1 lg:flex"
           aria-label="Main navigation"
         >
-          {primaryLinks.map((link) => {
+          {links.map((link) => {
             const active = isActive(link.href);
             const Icon = link.icon;
             return (
@@ -231,6 +238,11 @@ export function Navbar() {
                   ) : null}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => navigate('/account')}>
+                  <UserCog size={16} aria-hidden="true" />
+                  Account settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem danger onSelect={handleSignOut}>
                   <LogOut size={16} aria-hidden="true" />
                   Sign out
@@ -302,7 +314,7 @@ export function Navbar() {
                 </div>
 
                 <nav className="mt-4 flex-1 space-y-1.5 overflow-y-auto" aria-label="Mobile navigation">
-                  {drawerLinks.map((link) => {
+                  {mobileLinks.map((link) => {
                     const active = isActive(link.href);
                     const Icon = link.icon;
                     return (

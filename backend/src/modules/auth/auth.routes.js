@@ -1,11 +1,25 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../../models/User.js';
 import { logger } from '../../utils/logger.js';
 
 const router = express.Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000;
+const adminLockouts = new Map();
+
+function lockoutState(email) {
+  const state = adminLockouts.get(email);
+  if (!state) return { failedAttempts: 0, lockedUntil: 0 };
+  if (state.lockedUntil > Date.now()) return state;
+  // Failed attempts do not reset when the lockout expires (PRD §3.6).
+  return state;
+}
 
 /**
  * POST /api/auth/google
@@ -86,6 +100,7 @@ router.post('/google', async (req, res) => {
       avatarUrl: user.avatarUrl,
       role: user.role,
     };
+    req.session.authenticatedAt = new Date().toISOString();
 
     res.status(200).json({
       success: true,
@@ -95,6 +110,82 @@ router.post('/google', async (req, res) => {
     logger.error('Google OAuth error', { error: error.message });
     res.status(401).json({ error: 'AUTH_FAILED', message: 'Google authentication failed' });
   }
+});
+
+/**
+ * POST /api/auth/admin/login
+ * Email/password login for the single Admin account (PRD §3.5, §3.6; TRD §10.7).
+ * In local development without configured credentials the flow is simulated,
+ * matching the mock Google flow above.
+ */
+router.post('/admin/login', async (req, res) => {
+  const parsed = z.object({
+    email: z.string().trim().email().max(254),
+    password: z.string().min(1).max(200),
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'INVALID_CREDENTIALS',
+      message: 'A valid admin email and password are required.',
+    });
+  }
+
+  const { email, password } = parsed.data;
+  const configuredEmail = process.env.ADMIN_EMAIL;
+  const configuredHash = process.env.ADMIN_PASSWORD_HASH;
+  const isMock = !configuredEmail || !configuredHash;
+
+  if (!isMock) {
+    const state = lockoutState(configuredEmail.toLowerCase());
+
+    if (state.lockedUntil > Date.now()) {
+      const remainingMinutes = Math.max(1, Math.ceil((state.lockedUntil - Date.now()) / 60000));
+      return res.status(423).json({
+        error: 'ACCOUNT_LOCKED',
+        message: `Too many failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}.`,
+        retryAfterMinutes: remainingMinutes,
+      });
+    }
+
+    const emailMatches = email.toLowerCase() === configuredEmail.toLowerCase();
+    const passwordMatches = emailMatches && await bcrypt.compare(password, configuredHash);
+
+    if (!passwordMatches) {
+      const failedAttempts = state.failedAttempts + 1;
+      const lockedUntil = failedAttempts >= MAX_FAILED_ATTEMPTS ? Date.now() + LOCKOUT_MS : 0;
+      adminLockouts.set(configuredEmail.toLowerCase(), { failedAttempts, lockedUntil });
+      logger.warn('Admin login failed', { email, failedAttempts, locked: lockedUntil > 0 });
+
+      if (lockedUntil > 0) {
+        return res.status(423).json({
+          error: 'ACCOUNT_LOCKED',
+          message: 'Too many failed login attempts. Try again in 15 minutes.',
+          retryAfterMinutes: 15,
+        });
+      }
+      return res.status(401).json({
+        error: 'INVALID_CREDENTIALS',
+        message: 'Incorrect admin email or password.',
+      });
+    }
+
+    adminLockouts.delete(configuredEmail.toLowerCase());
+  } else {
+    logger.info('Simulated admin authentication in development mode');
+  }
+
+  const adminUser = {
+    id: 'mock_admin_id',
+    email: isMock ? email : configuredEmail,
+    name: 'Administrator',
+    avatarUrl: '',
+    role: 'admin',
+  };
+
+  req.session.user = adminUser;
+  req.session.authenticatedAt = new Date().toISOString();
+  return res.status(200).json({ success: true, user: adminUser });
 });
 
 /**

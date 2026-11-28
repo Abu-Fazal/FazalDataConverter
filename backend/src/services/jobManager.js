@@ -116,6 +116,46 @@ class JobManager {
     return this.jobs.get(jobId) || null;
   }
 
+  removeJob(jobId) {
+    const job = this.jobs.get(jobId);
+    if (!job) return null;
+    this.jobs.delete(jobId);
+    return job;
+  }
+
+  removeInactiveJobs(ownerId) {
+    const removed = [];
+    for (const [jobId, job] of this.jobs) {
+      const owned = ownerId == null
+        ? job.userId == null
+        : String(job.userId) === String(ownerId);
+      const inactive = ['completed', 'failed', 'cancelled'].includes(job.status);
+      if (owned && inactive) {
+        removed.push(job);
+        this.jobs.delete(jobId);
+      }
+    }
+    return removed;
+  }
+
+  markSourceDeleted(filePath) {
+    if (!filePath) return;
+    const deletedAt = new Date().toISOString();
+    for (const job of this.jobs.values()) {
+      if (job.tempFilePath === filePath) job.originalDeletedAt = deletedAt;
+    }
+  }
+
+  markOutputDeleted(jobId) {
+    const job = this.jobs.get(jobId);
+    if (!job) return null;
+    job.outputDeletedAt = new Date().toISOString();
+    if (job.result) {
+      job.result.payload = null;
+    }
+    return job;
+  }
+
   listJobs(ownerId) {
     return [...this.jobs.values()]
       .filter((job) =>

@@ -15,6 +15,7 @@ import { extractStaticJsData } from './jsStaticExtractor.js';
 import { inspectWorkbook } from './workbookInspector.js';
 import { runConversionJob } from './jobProcessor.js';
 import { jobManager } from '../../services/jobManager.js';
+import { fileVault } from '../../services/fileVault.js';
 import { verifyConversionOutput } from '../../utils/outputVerifier.js';
 import { config } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
@@ -230,11 +231,12 @@ router.post('/jobs', async (req, res) => {
   if (req.session) req.session.consent = consent;
 
   const jobId = crypto.randomUUID();
+  const sourceSize = (await fs.stat(sourcePath)).size;
   jobManager.createJob(jobId, {
     originalFileName: request.originalName,
     sourceFormat: extension.replace('.', ''),
     targetFormat: targetFormatFor(request.direction),
-    fileSizeBytes: (await fs.stat(sourcePath)).size,
+    fileSizeBytes: sourceSize,
     tempFilePath: sourcePath,
     userId: req.userId ?? null,
     request: {
@@ -245,6 +247,15 @@ router.post('/jobs', async (req, res) => {
       overrides: request.overrides,
       consent,
     },
+  });
+
+  fileVault.register({
+    filePath: sourcePath,
+    ownerId: req.userId,
+    kind: 'original',
+    sizeBytes: sourceSize,
+    fileName: request.originalName,
+    jobId,
   });
 
   queueConversion(jobId);

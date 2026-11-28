@@ -10,6 +10,7 @@ import converterRoutes from './modules/converter/converter.routes.js';
 import filesRoutes from './modules/files/files.routes.js';
 import jobsRoutes from './modules/jobs/jobs.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import accountRoutes from './modules/account/account.routes.js';
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/converter', converterRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/account', accountRoutes);
 
 // Central 404 handler
 app.use((req, res) => {

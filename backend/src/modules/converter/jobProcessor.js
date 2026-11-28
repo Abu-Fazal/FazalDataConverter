@@ -6,6 +6,7 @@ import { logger } from '../../utils/logger.js';
 import { purgeTempFile } from '../../utils/tempCleaner.js';
 import { verifyConversionOutput } from '../../utils/outputVerifier.js';
 import { jobManager } from '../../services/jobManager.js';
+import { fileVault } from '../../services/fileVault.js';
 import { convertExcelToNormalJson } from './excelToNormalJson.js';
 import { convertExcelToWorkbookJson } from './excelToWorkbookJson.js';
 import { convertJsonToExcel } from './jsonToExcel.js';
@@ -353,10 +354,21 @@ export async function runConversionJob(jobId) {
       outputPath: output.outputPath,
     });
 
-    // Retain the source when diagnostics need inline correction (PRD §6.5),
-    // otherwise release it immediately (PRD §9.3).
+    if (job.userId != null) {
+      fileVault.register({
+        filePath: output.outputPath || `memory:${jobId}`,
+        ownerId: job.userId,
+        kind: 'output',
+        sizeBytes: output.summary.sizeBytes || 0,
+        fileName: output.summary.filename || '',
+        jobId,
+      });
+    }
+
+    // Registered-user sources stay in the vault until the user deletes them
+    // (PRD §7.5), while guest sources are released after conversion (PRD §9.3).
     const flagged = (output.summary.counts?.recoverable || 0) + (output.summary.counts?.warnings || 0) > 0;
-    if (!flagged) {
+    if (job.userId == null && !flagged) {
       await purgeTempFile(job.tempFilePath);
     }
   } catch (error) {
