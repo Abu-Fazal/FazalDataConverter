@@ -12,6 +12,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  ShieldCheck,
   User,
   UserCog,
   X,
@@ -87,7 +88,7 @@ export function Navbar() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) setIsMenuOpen(false);
+      if (window.innerWidth >= 1280) setIsMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -114,11 +115,21 @@ export function Navbar() {
 
   const displayName = user?.name || user?.email || 'Account';
   const initial = displayName.charAt(0).toUpperCase();
+  const isAdmin = user?.role === 'admin';
+  const adminLink = { name: 'Admin Console', href: '/admin', icon: ShieldCheck };
   const links = user
-    ? [...primaryLinks, { name: 'Account', href: '/account', icon: UserCog }]
+    ? [
+        ...primaryLinks,
+        { name: 'Account', href: '/account', icon: UserCog },
+        ...(isAdmin ? [adminLink] : []),
+      ]
     : primaryLinks;
   const mobileLinks = user
-    ? [...drawerLinks, { name: 'Account Settings', href: '/account', icon: UserCog }]
+    ? [
+        ...drawerLinks,
+        { name: 'Account Settings', href: '/account', icon: UserCog },
+        ...(isAdmin ? [adminLink] : []),
+      ]
     : drawerLinks;
 
   const wordmark = (
@@ -153,7 +164,7 @@ export function Navbar() {
         </Link>
 
         <nav
-          className="hidden items-center gap-1.5 rounded-xl border border-border-subtle bg-surface-app p-1 lg:flex"
+          className="hidden items-center gap-1.5 rounded-xl border border-border-subtle bg-surface-app p-1 xl:flex"
           aria-label="Main navigation"
         >
           {links.map((link) => {
@@ -164,7 +175,10 @@ export function Navbar() {
                 key={link.name}
                 to={link.href}
                 aria-current={active ? 'page' : undefined}
-                className={navLinkClass(active)}
+                className={cn(
+                  navLinkClass(active),
+                  (link.name === 'Account' || link.name === 'Admin Console') && 'hidden 2xl:flex',
+                )}
               >
                 <Icon
                   size={16}
@@ -200,19 +214,20 @@ export function Navbar() {
         <div className="flex items-center gap-2 sm:gap-2.5">
           <Link
             to="/login"
-            className="hidden h-10 items-center justify-center rounded-xl border border-border-subtle bg-surface-primary px-4 text-sm font-semibold text-text-primary shadow-sm transition-all hover:border-border-hover hover:bg-surface-secondary hover:text-brand-primary sm:inline-flex"
+            className="hidden h-10 items-center justify-center rounded-xl border border-border-subtle bg-surface-primary px-4 text-sm font-semibold text-text-primary shadow-sm transition-all hover:border-border-hover hover:bg-surface-secondary hover:text-brand-primary xl:inline-flex"
           >
             <LogIn size={16} className="mr-2 text-text-muted" aria-hidden="true" />
             Login
           </Link>
           <Link
             to="/converter"
-            className="hidden h-10 items-center justify-center rounded-xl bg-gradient-brand px-4 text-sm font-semibold text-text-inverse shadow-sm transition-all duration-200 hover:bg-gradient-brand-hover hover:shadow-md active:scale-[0.98] sm:inline-flex"
+            className="hidden h-10 items-center justify-center rounded-xl bg-gradient-brand px-4 text-sm font-semibold text-text-inverse shadow-sm transition-all duration-200 hover:bg-gradient-brand-hover hover:shadow-md active:scale-[0.98] xl:inline-flex"
           >
             Get Started
           </Link>
-          <span className="hidden h-6 w-px bg-border-subtle sm:block" aria-hidden="true" />
+          <span className="hidden h-6 w-px bg-border-subtle xl:block" aria-hidden="true" />
 
+          <div className="hidden xl:block">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -238,6 +253,15 @@ export function Navbar() {
                   ) : null}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => navigate('/admin')}>
+                      <ShieldCheck size={16} aria-hidden="true" />
+                      Admin console
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                ) : null}
                 <DropdownMenuItem onSelect={() => navigate('/account')}>
                   <UserCog size={16} aria-hidden="true" />
                   Account settings
@@ -260,6 +284,7 @@ export function Navbar() {
               </span>
             </Link>
           )}
+          </div>
 
           <button
             ref={triggerRef}
@@ -268,7 +293,7 @@ export function Navbar() {
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             onClick={() => (isMenuOpen ? closeMenu() : setIsMenuOpen(true))}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-brand-primary-surface bg-brand-primary-soft text-brand-primary shadow-sm transition-colors hover:bg-brand-primary hover:text-text-inverse active:scale-95 lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-brand-primary-surface bg-brand-primary-soft text-brand-primary shadow-sm transition-colors hover:bg-brand-primary hover:text-text-inverse active:scale-95 xl:hidden"
           >
             {isMenuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           </button>
@@ -277,7 +302,7 @@ export function Navbar() {
 
       {isMenuOpen
         ? createPortal(
-            <div className="fixed inset-0 z-[60] lg:hidden">
+            <div className="fixed inset-0 z-[60] xl:hidden">
               <div
                 className="absolute inset-0 bg-text-primary/40 backdrop-blur-sm animate-overlay-show"
                 onClick={closeMenu}

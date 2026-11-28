@@ -60,6 +60,28 @@ class FileVault {
   }
 
   /**
+   * Admin-only aggregate across all owners (PRD §8.1 system storage figure).
+   */
+  totalStats() {
+    const records = [...this.files.values()];
+    const originalBytes = records
+      .filter((record) => record.kind === 'original')
+      .reduce((sum, record) => sum + record.sizeBytes, 0);
+    const outputBytes = records
+      .filter((record) => record.kind === 'output')
+      .reduce((sum, record) => sum + record.sizeBytes, 0);
+
+    return {
+      objectCount: records.length,
+      ownerCount: new Set(records.map((record) => record.ownerId)).size,
+      originalBytes,
+      outputBytes,
+      usedBytes: originalBytes + outputBytes,
+      quotaBytes: DEFAULT_QUOTA_BYTES,
+    };
+  }
+
+  /**
    * Removes a stored object and deletes the physical file first (TRD §9.8).
    * The metadata record is kept when deletion fails so the request can be retried.
    */

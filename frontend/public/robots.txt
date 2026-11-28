@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /history
+Disallow: /login
+Disallow: /converter/progress
+Disallow: /converter/error
+
+Sitemap: https://fazaldataconverter.com/sitemap.xml

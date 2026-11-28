@@ -4,21 +4,19 @@ import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../../models/User.js';
+import { config } from '../../config/env.js';
+import { adminStore, LOCKOUT_THRESHOLD } from '../../services/adminStore.js';
 import { logger } from '../../utils/logger.js';
+
+function mockAuthAllowed() {
+  return config.env !== 'production';
+}
 
 const router = express.Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_MS = 15 * 60 * 1000;
-const adminLockouts = new Map();
-
-function lockoutState(email) {
-  const state = adminLockouts.get(email);
-  if (!state) return { failedAttempts: 0, lockedUntil: 0 };
-  if (state.lockedUntil > Date.now()) return state;
-  // Failed attempts do not reset when the lockout expires (PRD §3.6).
-  return state;
+function clientIp(req) {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
 }
 
 /**
@@ -26,6 +24,14 @@ function lockoutState(email) {
  * Verifies Google ID Token credential sent from frontend GoogleLoginButton (PRD §3.3).
  */
 router.post('/google', async (req, res) => {
+  if (adminStore.isMaintenanceMode()) {
+    const settings = adminStore.getSettings();
+    return res.status(503).json({
+      error: 'MAINTENANCE_MODE',
+      message: settings.maintenanceMessage,
+    });
+  }
+
   const { credential } = req.body;
 
   if (!credential) {
@@ -35,8 +41,15 @@ router.post('/google', async (req, res) => {
   try {
     let payload = null;
 
-    // In dev mode when client id is placeholder, permit safe mock auth for development testing
+    // Mock auth is a development/testing convenience only. Production must
+    // configure a real Google client so no stranger can obtain a session.
     if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID.includes('your_google_client_id')) {
+      if (!mockAuthAllowed()) {
+        return res.status(503).json({
+          error: 'AUTH_NOT_CONFIGURED',
+          message: 'Google sign-in is not configured for this deployment.',
+        });
+      }
       logger.info('Simulated Google OAuth authentication in development mode');
       payload = {
         sub: 'mock_google_id_123456789',
@@ -54,6 +67,21 @@ router.post('/google', async (req, res) => {
 
     if (!payload || !payload.email) {
       return res.status(401).json({ error: 'INVALID_TOKEN', message: 'Failed to verify Google identity' });
+    }
+
+    // Suspended or deleted accounts are refused before any session is created (PRD §8.2).
+    const knownAccount = adminStore.findByEmail(payload.email);
+    if (knownAccount && knownAccount.status === 'suspended') {
+      return res.status(403).json({
+        error: 'ACCOUNT_SUSPENDED',
+        message: 'This account has been suspended by the administrator.',
+      });
+    }
+    if (knownAccount && knownAccount.status === 'deleted') {
+      return res.status(403).json({
+        error: 'ACCOUNT_DELETED',
+        message: 'This account has been permanently removed.',
+      });
     }
 
     // Find or create user in MongoDB
@@ -91,6 +119,13 @@ router.post('/google', async (req, res) => {
         };
       }
     }
+
+    adminStore.upsertRegisteredUser({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+    });
 
     // Bind authenticated user to session
     req.session.user = {
@@ -136,44 +171,66 @@ router.post('/admin/login', async (req, res) => {
   const configuredHash = process.env.ADMIN_PASSWORD_HASH;
   const isMock = !configuredEmail || !configuredHash;
 
+  if (isMock && !mockAuthAllowed()) {
+    return res.status(503).json({
+      error: 'ADMIN_AUTH_NOT_CONFIGURED',
+      message: 'Admin sign-in is not configured for this deployment.',
+    });
+  }
+
+  const sourceIp = clientIp(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
+
+  // Lockout is shared with the admin console so the countdown screen can show it.
+  const lockout = adminStore.getAdminLockoutStatus();
+  if (lockout.locked) {
+    adminStore.registerAdminLoginBlocked({ email, sourceIp });
+    const remainingMinutes = Math.max(1, Math.ceil(lockout.remainingSeconds / 60));
+    return res.status(423).json({
+      error: 'ACCOUNT_LOCKED',
+      message: `Too many failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}.`,
+      retryAfterMinutes: remainingMinutes,
+      retryAfterSeconds: lockout.remainingSeconds,
+      lockout,
+    });
+  }
+
   if (!isMock) {
-    const state = lockoutState(configuredEmail.toLowerCase());
-
-    if (state.lockedUntil > Date.now()) {
-      const remainingMinutes = Math.max(1, Math.ceil((state.lockedUntil - Date.now()) / 60000));
-      return res.status(423).json({
-        error: 'ACCOUNT_LOCKED',
-        message: `Too many failed login attempts. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}.`,
-        retryAfterMinutes: remainingMinutes,
-      });
-    }
-
     const emailMatches = email.toLowerCase() === configuredEmail.toLowerCase();
     const passwordMatches = emailMatches && await bcrypt.compare(password, configuredHash);
 
     if (!passwordMatches) {
-      const failedAttempts = state.failedAttempts + 1;
-      const lockedUntil = failedAttempts >= MAX_FAILED_ATTEMPTS ? Date.now() + LOCKOUT_MS : 0;
-      adminLockouts.set(configuredEmail.toLowerCase(), { failedAttempts, lockedUntil });
-      logger.warn('Admin login failed', { email, failedAttempts, locked: lockedUntil > 0 });
+      const next = adminStore.registerAdminFailure({ email, sourceIp, userAgent });
+      logger.warn('Admin login failed', {
+        email,
+        failedAttempts: next.failedAttempts,
+        locked: next.locked,
+      });
 
-      if (lockedUntil > 0) {
+      if (next.locked) {
         return res.status(423).json({
           error: 'ACCOUNT_LOCKED',
           message: 'Too many failed login attempts. Try again in 15 minutes.',
           retryAfterMinutes: 15,
+          retryAfterSeconds: next.remainingSeconds,
+          lockout: next,
         });
       }
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Incorrect admin email or password.',
+        remainingAttempts: Math.max(0, LOCKOUT_THRESHOLD - next.failedAttempts),
       });
     }
-
-    adminLockouts.delete(configuredEmail.toLowerCase());
   } else {
     logger.info('Simulated admin authentication in development mode');
   }
+
+  adminStore.registerAdminSuccess({
+    email: isMock ? email : configuredEmail,
+    sourceIp,
+    userAgent,
+  });
 
   const adminUser = {
     id: 'mock_admin_id',
@@ -189,14 +246,74 @@ router.post('/admin/login', async (req, res) => {
 });
 
 /**
+ * GET /api/auth/admin/lockout-status
+ * Public lockout state for the admin recovery countdown (PRD §3.6).
+ * Never reveals credentials or the configured admin email.
+ */
+router.get('/admin/lockout-status', (req, res) => {
+  res.status(200).json({
+    success: true,
+    ...adminStore.getAdminLockoutStatus(),
+  });
+});
+
+/**
+ * POST /api/auth/admin/recovery
+ * Password recovery request. Responses are always generic so the identity of
+ * the sole admin account is never disclosed (PRD §3.6).
+ */
+router.post('/admin/recovery', (req, res) => {
+  const parsed = z.object({ email: z.string().trim().email().max(254) }).safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'INVALID_REQUEST',
+      message: 'A valid email address is required.',
+    });
+  }
+
+  adminStore.registerRecoveryRequest({
+    email: parsed.data.email,
+    sourceIp: clientIp(req),
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'If this email is registered, a single-use recovery link valid for 15 minutes has been sent.',
+    expiresInMinutes: 15,
+  });
+});
+
+/**
  * GET /api/auth/me
  * Returns currently logged-in user or guest session context.
+ * Suspended or deleted accounts lose their session immediately.
  */
 router.get('/me', (req, res) => {
   if (req.session && req.session.user) {
+    const sessionUser = req.session.user;
+
+    if (sessionUser.role === 'registered') {
+      const account = adminStore.findByInternalId(sessionUser.id);
+      if (account && account.status !== 'active') {
+        req.session.destroy(() => {});
+        res.clearCookie('fdc.sid');
+        return res.status(200).json({
+          authenticated: false,
+          blocked: {
+            status: account.status,
+            reason: account.suspendedReason || null,
+          },
+          user: {
+            role: 'guest',
+            sessionId: 'guest_transient',
+          },
+        });
+      }
+    }
+
     return res.status(200).json({
       authenticated: true,
-      user: req.session.user,
+      user: sessionUser,
     });
   }
 

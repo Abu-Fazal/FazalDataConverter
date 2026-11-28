@@ -5,7 +5,9 @@ import { logger } from '../utils/logger.js';
 
 /**
  * Creates Express session middleware (TRD §10.3).
- * Uses MongoStore if MONGODB_URI is available, otherwise MemoryStore for offline development.
+ * Uses MongoStore in production; development uses MemoryStore so the mock-first
+ * app keeps working when Atlas is unreachable (connect-mongo would otherwise
+ * fail every request with querySrv errors).
  */
 export function createSessionMiddleware() {
   const mongoUri = process.env.MONGODB_URI;
@@ -24,7 +26,7 @@ export function createSessionMiddleware() {
     },
   };
 
-  if (mongoUri && !mongoUri.includes('<username>')) {
+  if (isProd && mongoUri && !mongoUri.includes('<username>')) {
     sessionOptions.store = MongoStore.create({
       mongoUrl: mongoUri,
       collectionName: 'sessions',
@@ -33,7 +35,7 @@ export function createSessionMiddleware() {
     });
     logger.info('Session store initialized with MongoDB Atlas connect-mongo');
   } else {
-    logger.info('Session store initialized with in-memory store (Local dev fallback)');
+    logger.info('Session store initialized with in-memory store (development)');
   }
 
   return session(sessionOptions);

@@ -1,5 +1,11 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+
+// backend/.env (workspace cwd) wins; the repo-root .env fills any missing keys.
 dotenv.config();
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+dotenv.config({ path: path.join(repoRoot, '.env') });
 
 export const config = {
   env: process.env.NODE_ENV || 'development',
@@ -8,5 +14,7 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   maxFileSizeBytes: parseInt(process.env.MAX_FILE_SIZE_BYTES, 10) || 52428800, // Strictly 50 MB
   jobTimeoutSeconds: parseInt(process.env.JOB_TIMEOUT_SECONDS, 10) || 60,
-  tempStoragePath: process.env.TEMP_STORAGE_PATH || './backend/storage/temp',
+  tempStoragePath:
+    process.env.TEMP_STORAGE_PATH ||
+    (process.env.VERCEL ? '/tmp/fazal-storage' : './backend/storage/temp'),
 };

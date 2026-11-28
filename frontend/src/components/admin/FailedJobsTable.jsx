@@ -1,152 +1,79 @@
-import { AlertCircle, Download } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '../ui/button.jsx';
+import { AlertCircle, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Badge } from '../ui/badge.jsx';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table.jsx';
-import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip.jsx';
-
-const MOCK_FAILED_JOBS = [
-  {
-    id: 'job_003',
-    fileName: 'inventory.xls',
-    sourceFormat: 'xls',
-    targetFormat: 'json',
-    user: 'user_a@example.com',
-    status: 'failed',
-    error: 'Unsupported file structure',
-    errorCategory: 'Invalid Format',
-    createdAt: '2026-11-20 14:32:10',
-  },
-  {
-    id: 'job_007',
-    fileName: 'large_report.xlsx',
-    sourceFormat: 'xlsx',
-    targetFormat: 'bson',
-    user: 'user_b@example.com',
-    status: 'failed',
-    error: 'File exceeds processing timeout',
-    errorCategory: 'Timeout',
-    createdAt: '2026-11-19 09:15:45',
-  },
-  {
-    id: 'job_011',
-    fileName: 'data.json',
-    sourceFormat: 'json',
-    targetFormat: 'xlsx',
-    user: 'user_c@example.com',
-    status: 'failed',
-    error: 'Malformed JSON input',
-    errorCategory: 'Invalid Data',
-    createdAt: '2026-11-18 16:42:00',
-  },
-];
-
-const CSV_HEADERS = ['ID', 'File', 'Conversion', 'User', 'Error', 'Category', 'Created At'];
-
-function jobToRow(job) {
-  return [
-    job.id,
-    job.fileName,
-    `${job.sourceFormat} to ${job.targetFormat}`,
-    job.user,
-    job.error,
-    job.errorCategory,
-    job.createdAt,
-  ];
-}
-
-function downloadCsv(rows, fileName) {
-  const csv = [CSV_HEADERS.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+import { EmptyState } from '../ui/empty-state.jsx';
+import { formatTimeAgo } from './format.js';
 
 /**
- * Failed conversion jobs table (Chunk 5.5).
- * Admin can only view metadata — never file contents.
+ * Recent fatal conversion failures (metadata only, PRD §8.3).
+ * Raw payloads are never exposed to the Admin.
  */
-export function FailedJobsTable() {
-  function exportAll() {
-    downloadCsv(
-      MOCK_FAILED_JOBS.map(jobToRow),
-      `failed-jobs-${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    toast.success('Failed jobs metadata exported', { description: `${MOCK_FAILED_JOBS.length} rows, metadata only.` });
-  }
-
-  function exportOne(job) {
-    downloadCsv([jobToRow(job)], `failed-job-${job.id}.csv`);
-    toast.success('Job metadata exported', { description: job.fileName });
-  }
-
+export function FailedJobsTable({ jobs = [], loading = false }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-text-primary">Failed Conversion Jobs</h2>
-        <Button size="small" variant="outline" onClick={exportAll}>
-          <Download className="w-4 h-4 mr-2" aria-hidden="true" />
-          Export CSV
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-headline-sm text-text-primary">Recent fatal failures</h2>
+          <p className="text-body-sm text-text-secondary">Diagnostics metadata only — no payload access.</p>
+        </div>
+        <Link
+          to="/admin/conversions?status=failed"
+          className="inline-flex items-center gap-1.5 text-label-lg text-brand-primary hover:text-brand-primary-deep"
+        >
+          Open failure log
+          <ArrowRight size={14} aria-hidden="true" />
+        </Link>
       </div>
 
-      <Table caption="Failed conversion jobs (metadata only)">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>File</TableHead>
-            <TableHead>Conversion</TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>Error Category</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {MOCK_FAILED_JOBS.map((job) => (
-            <TableRow key={job.id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-error-text" aria-hidden="true" />
-                  <span className="font-medium">{job.fileName}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-text-secondary">
-                {job.sourceFormat} to {job.targetFormat}
-              </TableCell>
-              <TableCell className="text-text-secondary tabular-nums">{job.user}</TableCell>
-              <TableCell>
-                <Badge variant="error">{job.errorCategory}</Badge>
-              </TableCell>
-              <TableCell className="text-text-secondary tabular-nums">{job.createdAt}</TableCell>
-              <TableCell>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="small"
-                      variant="outline"
-                      aria-label={`Export metadata for ${job.fileName}`}
-                      onClick={() => exportOne(job)}
-                    >
-                      <Download className="w-4 h-4" aria-hidden="true" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Export metadata</TooltipContent>
-                </Tooltip>
-              </TableCell>
+      {loading ? (
+        <p className="rounded-xl border border-border-subtle bg-surface-primary px-4 py-8 text-center text-body-sm text-text-muted">
+          Loading failure telemetry…
+        </p>
+      ) : jobs.length === 0 ? (
+        <div className="rounded-xl border border-border-subtle bg-surface-primary">
+          <EmptyState
+            icon={AlertCircle}
+            title="No failed jobs"
+            description="Every recent conversion completed without a fatal error."
+          />
+        </div>
+      ) : (
+        <Table caption="Recent failed conversion jobs (metadata only)">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>File</TableHead>
+              <TableHead>Owner</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>When</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      <p className="text-xs text-text-muted">
-        Admin can view conversion metadata only. Original files and converted content are not accessible.
-      </p>
+          </TableHeader>
+          <TableBody>
+            {jobs.map((job) => (
+              <TableRow key={job.id}>
+                <TableCell>
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-error-text" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="truncate text-body-md font-medium text-text-primary">{job.fileName}</p>
+                      <p className="text-[11px] text-text-muted">{job.directionLabel}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-body-sm text-text-secondary">
+                  <span className="block max-w-[160px] truncate">{job.owner.name}</span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="error">{job.errorCategory || 'Unknown'}</Badge>
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-body-sm text-text-muted">
+                  {formatTimeAgo(job.createdAt)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function Footer() {
   return (
     <footer className="mt-auto w-full bg-surface-primary pt-14 pb-8" aria-label="Site footer">
       <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-12 gap-8 lg:gap-10">
+        <div className="grid grid-cols-12 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-10 lg:gap-x-10">
           <div className="col-span-12 flex flex-col gap-4 lg:col-span-4 lg:pr-6">
             <Link
               to="/"

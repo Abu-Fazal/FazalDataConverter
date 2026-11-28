@@ -1,4 +1,5 @@
 import { Button } from '../ui/button.jsx';
+import { API_BASE } from '../../services/apiBase';
 
 /**
  * Google Login button component (Chunk C).
@@ -25,7 +26,7 @@ export function GoogleLoginButton({ onLogin, disabled = false }) {
     // Production: redirect to Google OAuth
     // The actual OAuth flow is handled by the backend
     // This button will redirect to /api/auth/google endpoint
-    window.location.href = '/api/auth/google';
+    window.location.href = `${API_BASE}/auth/google`;
   };
 
   return (

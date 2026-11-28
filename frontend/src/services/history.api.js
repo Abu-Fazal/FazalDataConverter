@@ -1,4 +1,5 @@
 import { get, post, del } from './api.client';
+import { API_BASE } from './apiBase';
 
 function triggerDownload(url) {
   const link = document.createElement('a');
@@ -12,9 +13,9 @@ function triggerDownload(url) {
 export const historyApi = {
   list: () => get('/jobs'),
 
-  downloadConverted: (jobId) => triggerDownload(`/api/jobs/download/${encodeURIComponent(jobId)}`),
+  downloadConverted: (jobId) => triggerDownload(`${API_BASE}/jobs/download/${encodeURIComponent(jobId)}`),
 
-  downloadOriginal: (jobId) => triggerDownload(`/api/jobs/original/${encodeURIComponent(jobId)}`),
+  downloadOriginal: (jobId) => triggerDownload(`${API_BASE}/jobs/original/${encodeURIComponent(jobId)}`),
 
   deleteOriginal: (jobId) => del(`/jobs/${encodeURIComponent(jobId)}/original`),
 
