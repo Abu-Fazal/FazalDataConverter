@@ -3,72 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button.jsx';
 import { HistoryTable } from './HistoryTable.jsx';
+import { get } from '@/services/api.client';
 
 const API_BASE = '/api';
 
-/**
- * User History & File Management screen (Chunk 5.4).
- * Lists conversion history in a TanStack Table with search, pagination, sort,
- * and file actions (download, delete, cancel).
- */
 export function UserHistory() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  const MOCK_DATA = [
-    {
-      id: 'job_001',
-      originalFileName: 'budget_2024.xlsx',
-      sourceFormat: 'xlsx',
-      targetFormat: 'json',
-      status: 'completed',
-      progress: 100,
-      fileSizeBytes: 102400,
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      r2ConvertedKey: 'conversions/budget_2024.json',
-    },
-    {
-      id: 'job_002',
-      originalFileName: 'sales_data.json',
-      sourceFormat: 'json',
-      targetFormat: 'xlsx',
-      status: 'processing',
-      progress: 65,
-      fileSizeBytes: 51200,
-      createdAt: new Date(Date.now() - 172800000).toISOString(),
-    },
-    {
-      id: 'job_003',
-      originalFileName: 'inventory.xls',
-      sourceFormat: 'xls',
-      targetFormat: 'json',
-      status: 'failed',
-      progress: 0,
-      fileSizeBytes: 204800,
-      createdAt: new Date(Date.now() - 259200000).toISOString(),
-    },
-    {
-      id: 'job_004',
-      originalFileName: 'report.xlsx',
-      sourceFormat: 'xlsx',
-      targetFormat: 'bson',
-      status: 'completed',
-      progress: 100,
-      fileSizeBytes: 153600,
-      createdAt: new Date(Date.now() - 432000000).toISOString(),
-      r2ConvertedKey: 'conversions/report.bson',
-    },
-  ];
-
   useEffect(() => {
-    setLoading(true);
-    // Simulate API fetch. Replace with GET /api/jobs list endpoint when available.
-    const timer = setTimeout(() => {
-      setData(MOCK_DATA);
-      setLoading(false);
-    }, 600);
+    async function fetchHistory() {
+      try {
+        const res = await apiClient.get('/jobs');
+        setData(res.data || []);
+      } catch (err) {
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchHistory();
+    const timer = setTimeout(fetchHistory, 30000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -101,7 +58,6 @@ export function UserHistory() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="small" onClick={goBack}>
@@ -114,10 +70,7 @@ export function UserHistory() {
             </p>
           </div>
         </div>
-        <Button size="small">
-          <Plus className="w-4 h-4 mr-2" />
-          New Conversion
-        </Button>
+        <Button size="small">New Conversion</Button>
       </div>
 
       {deleteConfirm && (

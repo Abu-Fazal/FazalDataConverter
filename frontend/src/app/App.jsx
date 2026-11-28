@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Navbar } from '../components/Navbar.jsx';
-import { Footer } from '../components/Footer.jsx';
+import { Navbar } from '../components/layout/Navbar.jsx';
+import { Footer } from '../components/layout/Footer.jsx';
 import { ConverterPage } from '../components/converter/ConverterPage.jsx';
 import { ConversionProgress } from '../components/converter/ConversionProgress.jsx';
 import { ErrorReport } from '../components/converter/ErrorReport.jsx';
