@@ -1,4 +1,5 @@
 import xlsx from 'xlsx';
+import { applyCellOverrides } from './cellOverrides.js';
 
 /**
  * Converts Excel workbook to Normal Data JSON (TRD §7.6.A & PRD §6.2)
@@ -9,7 +10,7 @@ import xlsx from 'xlsx';
  * - Fully empty rows skipped
  * - Formula values taken from cached results
  */
-export function convertExcelToNormalJson(filePath, selectedSheets = null) {
+export function convertExcelToNormalJson(filePath, selectedSheets = null, overrides = []) {
   const workbook = xlsx.readFile(filePath, {
     cellFormula: true,
     cellDates: true,
@@ -29,6 +30,8 @@ export function convertExcelToNormalJson(filePath, selectedSheets = null) {
       result[sheetName] = [];
       continue;
     }
+
+    applyCellOverrides(worksheet, overrides, sheetName);
 
     const range = xlsx.utils.decode_range(worksheet['!ref']);
     const headers = [];

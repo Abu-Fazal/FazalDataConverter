@@ -1,44 +1,55 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { Navigate, useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { authApi } from '@/services/auth.api';
 
 /**
- * Auth guard (Chunk C).
- * Protects routes - redirects unauthenticated users to login.
- * Can be configured to allow guest access.
+ * Route guard for registered-user screens.
+ * Verifies the server session and redirects to sign-in with the intended path.
  */
 export function AuthGuard({ children, allowGuest = false, redirectTo = '/login' }) {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const [status, setStatus] = useState(allowGuest ? 'allowed' : 'checking');
 
   useEffect(() => {
-    // Check session - in real app, check if req.session.user exists
-    // For now, check localStorage or session
-    const checkAuth = async () => {
-      // This will be replaced with actual session check in later chunks
-      // For now, allow guest access if configured
-      if (allowGuest) {
-        setIsAuthenticated(true);
-      } else {
-        // Check if user is logged in via session
-        // In real app: fetch('/api/auth/me')
-        const hasSession = !!window.sessionStorage.getItem('fdc-user');
-        setIsAuthenticated(hasSession);
-      }
-      setIsLoading(false);
+    if (allowGuest) return undefined;
+    let cancelled = false;
+
+    authApi
+      .getCurrentUser()
+      .then((result) => {
+        if (!cancelled) setStatus(result?.success ? 'allowed' : 'denied');
+      })
+      .catch(() => {
+        if (!cancelled) setStatus('denied');
+      });
+
+    return () => {
+      cancelled = true;
     };
+  }, [allowGuest]);
 
-    checkAuth();
-  }, []);
-
-  if (isLoading) {
-    return null; // Show spinner or nothing while loading
+  if (status === 'checking') {
+    return (
+      <div
+        className="flex min-h-[420px] items-center justify-center"
+        role="status"
+        aria-live="polite"
+        aria-label="Checking your session"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-brand-primary" aria-hidden="true" />
+      </div>
+    );
   }
 
-  if (!isAuthenticated && !allowGuest) {
-    navigate(redirectTo);
-    return null;
+  if (status === 'denied') {
+    return (
+      <Navigate
+        to={redirectTo}
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    );
   }
 
   return children;

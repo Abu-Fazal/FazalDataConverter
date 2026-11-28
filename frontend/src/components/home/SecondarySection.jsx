@@ -1,6 +1,4 @@
-import { AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { Button } from '../ui/button.jsx';
-import { cn } from '@/lib/utils';
+import { ShieldCheck, CheckCircle2, Clock } from 'lucide-react';
 
 /**
  * Home Secondary Section (Phase 5).
@@ -9,7 +7,7 @@ import { cn } from '@/lib/utils';
 export function SecondarySection() {
   const features = [
     {
-      icon: AlertCircle,
+      icon: ShieldCheck,
       title: 'Secure',
       description: 'Bank-level encryption and ownership validation per userId. No unauthorized access.',
     },
@@ -27,7 +25,7 @@ export function SecondarySection() {
 
   return (
     <div className="bg-surface-primary py-12 px-4 max-w-5xl mx-auto">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 max-w-2xl mx-auto">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
@@ -39,7 +37,7 @@ export function SecondarySection() {
               <Icon className="w-8 h-8 text-brand-primary" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-semibold text-text-primary group-hover:text-brand-primary mb-2">{feature.title}</h3>
-            <p className="text-text-secondary line-clamp-2">{feature.description}</p>
+            <p className="text-sm text-text-secondary leading-relaxed">{feature.description}</p>
           </div>
           );
         })}

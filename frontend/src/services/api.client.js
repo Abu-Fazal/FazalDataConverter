@@ -65,5 +65,9 @@ export const put = (endpoint, data = {}, options = {}) =>
 /**
  * DELETE request helper
  */
-export const del = (endpoint, options = {}) =>
-  fetchApi(endpoint, { ...options, method: 'DELETE' });
+export const del = (endpoint, data = undefined, options = {}) =>
+  fetchApi(endpoint, {
+    ...options,
+    method: 'DELETE',
+    body: data ? JSON.stringify(data) : undefined,
+  });

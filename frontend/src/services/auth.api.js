@@ -3,46 +3,55 @@ import { get, post } from './api.client';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const isMockAuth = !GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('your_google_client_id');
 
-const MOCK_USER = {
-  id: 'mock_google_id_123456789',
-  email: 'user@fazaldataconverter.com',
-  name: 'Demo Registered User',
-  avatarUrl: 'https://ui-avatars.com/api/?name=Demo+User',
-  role: 'registered',
-};
-
 /**
  * Auth API service.
- * Mock mode stays until Google OAuth wiring lands (Phase 5).
+ * Dev mode uses the backend's simulated Google flow so a real session cookie exists.
+ * Real Google Identity Services wiring lands in Phase 5.
  */
 export const authApi = {
   googleLogin: async () => {
-    if (isMockAuth) {
-      window.sessionStorage.setItem('fdc-user', JSON.stringify(MOCK_USER));
-      return { success: true, user: MOCK_USER, isNewUser: true };
+    if (!isMockAuth) {
+      window.location.href = '/api/auth/google';
+      return { success: false };
     }
-    window.location.href = '/api/auth/google';
+    const res = await post('/auth/google', { credential: 'dev-mock-credential' });
+    if (res?.success && res.user) {
+      window.sessionStorage.setItem('fdc-user', JSON.stringify(res.user));
+      return { success: true, user: res.user };
+    }
+    return { success: false };
+  },
+
+  adminLogin: async (email, password) => {
+    const res = await post('/auth/admin/login', { email, password });
+    if (res?.success && res.user) {
+      window.sessionStorage.setItem('fdc-user', JSON.stringify(res.user));
+      return { success: true, user: res.user };
+    }
+    return { success: false };
   },
 
   getCurrentUser: async () => {
-    if (isMockAuth) {
-      const stored = window.sessionStorage.getItem('fdc-user');
-      return stored
-        ? { success: true, user: JSON.parse(stored) }
-        : { success: false, user: null };
-    }
     try {
       const res = await get('/auth/me');
-      return { success: true, user: res.user || null };
+      if (res?.authenticated && res.user) {
+        return { success: true, user: res.user };
+      }
     } catch {
-      return { success: false, user: null };
+      // Backend unreachable: fall back to the cached dev session below.
     }
+    const stored = window.sessionStorage.getItem('fdc-user');
+    return stored
+      ? { success: true, user: JSON.parse(stored) }
+      : { success: false, user: null };
   },
 
   logout: async () => {
     window.sessionStorage.removeItem('fdc-user');
-    if (!isMockAuth) {
+    try {
       await post('/auth/logout');
+    } catch {
+      // Session cookie expires on its own when the backend is unreachable.
     }
     return { success: true };
   },

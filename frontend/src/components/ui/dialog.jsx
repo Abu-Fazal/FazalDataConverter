@@ -8,18 +8,19 @@ const DialogTrigger = DialogPrimitive.Trigger;
 const DialogContent = React.forwardRef(
   ({ className, children, ...props }, ref) => (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[var(--overlay-dialog)] backdrop-blur-sm animate-overlay-show" />
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border-subtle bg-surface-primary p-6 shadow-lg rounded-xl sm:p-8',
+          'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border-subtle bg-surface-primary p-6 shadow-dialog rounded-xl sm:p-8',
+          'animate-dialog-show',
           className,
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-2 top-2 rounded-sm p-1.5 text-text-muted opacity-50 transition-opacity hover:opacity-100 hover:text-text-primary">
-          <X className="w-5 h-5" />
+        <DialogPrimitive.Close className="absolute right-2 top-2 rounded-md p-1.5 text-text-muted opacity-70 transition-opacity hover:opacity-100 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+          <X className="w-5 h-5" aria-hidden="true" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
