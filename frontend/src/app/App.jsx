@@ -7,6 +7,9 @@ import { ConversionProgress } from '../components/converter/ConversionProgress.j
 import { ErrorReport } from '../components/converter/ErrorReport.jsx';
 import { UserHistory } from '../components/history/UserHistory.jsx';
 import { AdminDashboard } from '../components/admin/AdminDashboard.jsx';
+import { HeroSection } from '../components/home/HeroSection.jsx';
+import { SecondarySection } from '../components/home/SecondarySection.jsx';
+import { HistorySection } from '../components/home/HistorySection.jsx';
 
 export default function App() {
   return (
@@ -32,6 +35,14 @@ export default function App() {
                 </div>
               </div>
             } />
+            <Route path="/converter" element={<ConverterPage />} />
+            <Route path="/" element={
+  <div className="min-h-screen flex flex-col">
+    <HeroSection />
+    <SecondarySection />
+    <HistorySection />
+  </div>
+} />
             <Route path="/converter" element={<ConverterPage />} />
             <Route path="/converter/progress/:jobId" element={<ConversionProgress />} />
             <Route path="/converter/error/:jobId" element={<ErrorReport />} />
