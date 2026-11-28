@@ -1,7 +1,10 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs/promises';
+import crypto from 'crypto';
+import { z } from 'zod';
 import { upload } from '../../middlewares/upload.js';
+import { requireJobOwnership } from '../../middlewares/ownership.js';
 import { validateMagicBytes } from '../../utils/fileValidator.js';
 import { purgeTempFile } from '../../utils/tempCleaner.js';
 import { convertExcelToNormalJson } from './excelToNormalJson.js';
@@ -9,11 +12,70 @@ import { convertExcelToWorkbookJson } from './excelToWorkbookJson.js';
 import { convertJsonToExcel } from './jsonToExcel.js';
 import { convertExcelToBson } from './excelToBson.js';
 import { extractStaticJsData } from './jsStaticExtractor.js';
+import { inspectWorkbook } from './workbookInspector.js';
+import { runConversionJob } from './jobProcessor.js';
+import { jobManager } from '../../services/jobManager.js';
 import { verifyConversionOutput } from '../../utils/outputVerifier.js';
 import { config } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
 
 const router = express.Router();
+
+const EXCEL_EXTENSIONS = ['.xlsx', '.xls', '.xlsm'];
+
+const overrideSchema = z.object({
+  sheet: z.string().min(1).max(128),
+  address: z.string().regex(/^[A-Z]{1,3}[1-9][0-9]{0,6}$/i),
+  value: z.union([z.string().max(5000), z.number(), z.boolean(), z.null()]),
+});
+
+const jobRequestSchema = z.object({
+  tempId: z.string().min(1).max(255),
+  originalName: z.string().min(1).max(255),
+  direction: z.enum(['excel-json', 'json-excel', 'excel-bson', 'js-extract']),
+  mode: z.enum(['normal', 'workbook']).optional().default('normal'),
+  sheets: z.array(z.string().min(1).max(128)).max(200).nullable().optional(),
+  overrides: z.array(overrideSchema).max(500).optional().default([]),
+  consentAccepted: z.literal(true),
+  consentVersion: z.string().min(1).max(20).optional().default('1.0'),
+});
+
+function tempFilePath(tempId) {
+  return path.join(path.resolve(config.tempStoragePath), path.basename(tempId));
+}
+
+function targetFormatFor(direction) {
+  if (direction === 'json-excel') return 'xlsx';
+  if (direction === 'excel-bson') return 'bson';
+  return 'json';
+}
+
+function directionMatchesExtension(direction, extension) {
+  if (direction === 'excel-json' || direction === 'excel-bson') {
+    return EXCEL_EXTENSIONS.includes(extension);
+  }
+  if (direction === 'json-excel') return extension === '.json';
+  if (direction === 'js-extract') return extension === '.js';
+  return false;
+}
+
+async function fileIsReadable(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function queueConversion(jobId) {
+  setImmediate(() => {
+    runConversionJob(jobId).catch((error) => {
+      logger.error('Failed to start conversion job', { jobId, error: error.message });
+      jobManager.failJob(jobId, 'The conversion worker could not start.');
+    });
+  });
+}
 
 /**
  * POST /api/converter/upload
@@ -44,6 +106,12 @@ router.post('/upload', (req, res, next) => {
       });
     }
 
+    if (req.session) {
+      const uploads = (req.session.uploads || []).filter((entry) => entry !== req.file.path).slice(-19);
+      uploads.push(req.file.path);
+      req.session.uploads = uploads;
+    }
+
     res.status(200).json({
       success: true,
       file: {
@@ -55,6 +123,198 @@ router.post('/upload', (req, res, next) => {
       },
     });
   });
+});
+
+/**
+ * POST /api/converter/discard
+ * Purges a session-uploaded source file when the client switches to local
+ * browser processing or removes the file before conversion (PRD §9.3).
+ */
+router.post('/discard', async (req, res) => {
+  const parsed = z.object({ tempId: z.string().min(1).max(255) }).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'MISSING_PARAM', message: 'tempId is required' });
+  }
+
+  const target = tempFilePath(parsed.data.tempId);
+  const uploads = req.session?.uploads || [];
+
+  if (!uploads.includes(target)) {
+    return res.status(403).json({ error: 'FORBIDDEN', message: 'This upload does not belong to your session.' });
+  }
+  if (jobManager.hasActiveJobForSource(target)) {
+    return res.status(409).json({ error: 'UPLOAD_IN_USE', message: 'The file is being converted and cannot be discarded.' });
+  }
+
+  await purgeTempFile(target);
+  req.session.uploads = uploads.filter((entry) => entry !== target);
+  return res.status(200).json({ success: true });
+});
+
+/**
+ * POST /api/converter/inspect
+ * Returns worksheet metadata and a small preview for the converter's
+ * pre-conversion review and sheet selector (PRD §6.9.3).
+ */
+router.post('/inspect', async (req, res) => {
+  const parsed = z.object({
+    tempId: z.string().min(1).max(255),
+    originalName: z.string().min(1).max(255).optional(),
+  }).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'MISSING_PARAM', message: 'tempId is required' });
+  }
+
+  const filePath = tempFilePath(parsed.data.tempId);
+  if (!(await fileIsReadable(filePath))) {
+    return res.status(404).json({ error: 'FILE_NOT_FOUND', message: 'Uploaded file could not be found.' });
+  }
+
+  if (!EXCEL_EXTENSIONS.includes(path.extname(filePath).toLowerCase())) {
+    return res.status(422).json({
+      error: 'UNSUPPORTED_FORMAT',
+      message: 'Sheet inspection is only available for Excel workbooks.',
+    });
+  }
+
+  try {
+    const inspected = inspectWorkbook(
+      filePath,
+      parsed.data.originalName || path.basename(parsed.data.tempId),
+    );
+    return res.status(200).json({ success: true, ...inspected });
+  } catch (error) {
+    logger.error('Workbook inspection failed', { error: error.message });
+    return res.status(422).json({
+      error: 'INSPECTION_FAILED',
+      message: `The workbook could not be inspected: ${error.message}`,
+    });
+  }
+});
+
+/**
+ * POST /api/converter/jobs
+ * Queues an asynchronous conversion and returns 202 with the job id (TRD §10.8).
+ * Consent is mandatory before the first conversion (PRD §9.1).
+ */
+router.post('/jobs', async (req, res) => {
+  const parsed = jobRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'INVALID_REQUEST',
+      message: 'The conversion request is invalid.',
+      details: parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })),
+    });
+  }
+
+  const request = parsed.data;
+  const extension = path.extname(request.originalName).toLowerCase();
+
+  if (!directionMatchesExtension(request.direction, extension)) {
+    return res.status(422).json({
+      error: 'UNSUPPORTED_CONVERSION',
+      message: `Direction ${request.direction} is not available for ${extension || 'this file'}.`,
+    });
+  }
+
+  const sourcePath = tempFilePath(request.tempId);
+  if (!(await fileIsReadable(sourcePath))) {
+    return res.status(404).json({ error: 'FILE_NOT_FOUND', message: 'Uploaded file could not be found.' });
+  }
+
+  const consent = {
+    version: request.consentVersion,
+    acceptedAt: new Date().toISOString(),
+    userId: req.userId ?? null,
+  };
+  if (req.session) req.session.consent = consent;
+
+  const jobId = crypto.randomUUID();
+  jobManager.createJob(jobId, {
+    originalFileName: request.originalName,
+    sourceFormat: extension.replace('.', ''),
+    targetFormat: targetFormatFor(request.direction),
+    fileSizeBytes: (await fs.stat(sourcePath)).size,
+    tempFilePath: sourcePath,
+    userId: req.userId ?? null,
+    request: {
+      direction: request.direction,
+      mode: request.direction === 'excel-json' ? request.mode : 'normal',
+      targetFormat: targetFormatFor(request.direction),
+      sheets: request.sheets ?? null,
+      overrides: request.overrides,
+      consent,
+    },
+  });
+
+  queueConversion(jobId);
+
+  return res.status(202).json({
+    success: true,
+    accepted: true,
+    jobId,
+    statusUrl: `/api/jobs/status/${jobId}`,
+  });
+});
+
+/**
+ * POST /api/converter/jobs/:jobId/retry
+ * Re-runs a failed conversion with corrected cells, reusing the retained
+ * source file (PRD §10.3, §6.9.4).
+ */
+router.post('/jobs/:jobId/retry', requireJobOwnership, async (req, res) => {
+  const retrySchema = z.object({
+    overrides: z.array(overrideSchema).max(500).optional().default([]),
+  });
+  const parsed = retrySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'INVALID_OVERRIDES', message: 'Cell corrections are invalid.' });
+  }
+
+  const original = jobManager.getJob(req.params.jobId);
+  if (!original) {
+    return res.status(404).json({ error: 'JOB_NOT_FOUND', message: 'The original job no longer exists.' });
+  }
+  if (!['failed', 'completed'].includes(original.status)) {
+    return res.status(409).json({
+      error: 'JOB_NOT_RETRYABLE',
+      message: 'Only failed or completed jobs can be retried.',
+    });
+  }
+  if (!original.tempFilePath || !(await fileIsReadable(original.tempFilePath))) {
+    return res.status(410).json({
+      error: 'SOURCE_EXPIRED',
+      message: 'The temporary source file has expired. Upload the file again to retry.',
+    });
+  }
+
+  const merged = new Map();
+  for (const override of [...(original.request?.overrides || []), ...parsed.data.overrides]) {
+    merged.set(`${override.sheet}!${override.address.toUpperCase()}`, {
+      sheet: override.sheet,
+      address: override.address.toUpperCase(),
+      value: override.value,
+    });
+  }
+  const overrides = [...merged.values()];
+
+  const jobId = crypto.randomUUID();
+  jobManager.createJob(jobId, {
+    originalFileName: original.originalFileName,
+    sourceFormat: original.sourceFormat,
+    targetFormat: original.targetFormat,
+    fileSizeBytes: original.fileSizeBytes,
+    tempFilePath: original.tempFilePath,
+    userId: original.userId ?? null,
+    request: {
+      ...original.request,
+      overrides,
+      retryOf: original.id,
+    },
+  });
+
+  queueConversion(jobId);
+  return res.status(202).json({ success: true, jobId, retryOf: original.id });
 });
 
 /**

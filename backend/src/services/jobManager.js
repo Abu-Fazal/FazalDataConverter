@@ -22,6 +22,7 @@ class JobManager {
       fileSizeBytes: details.fileSizeBytes || 0,
       tempFilePath: details.tempFilePath || null,
       userId: details.userId ?? null,
+      request: details.request || null,
       result: null,
       error: null,
       createdAt: new Date().toISOString(),
@@ -62,13 +63,14 @@ class JobManager {
     logger.info('Async job marked complete', { jobId });
   }
 
-  failJob(jobId, errorMessage) {
+  failJob(jobId, errorMessage, result = null) {
     const job = this.jobs.get(jobId);
     if (!job) return;
 
     job.status = 'failed';
     job.error = errorMessage;
     job.stage = 'Failed';
+    if (result !== null) job.result = result;
     job.updatedAt = new Date().toISOString();
     logger.error('Async job failed', { jobId, error: errorMessage });
   }
@@ -89,6 +91,27 @@ class JobManager {
     return job;
   }
 
+  /**
+   * Releases a guest job's converted output after it has been downloaded
+   * (PRD §9.3: guest temporary files are removed after conversion).
+   */
+  async consumeOutput(jobId) {
+    const job = this.jobs.get(jobId);
+    if (!job || !job.result || job.userId != null) return;
+
+    if (job.result.outputPath) {
+      await purgeTempFile(job.result.outputPath);
+    }
+
+    if (job.tempFilePath && !this.hasActiveJobForSource(job.tempFilePath)) {
+      await purgeTempFile(job.tempFilePath);
+    }
+
+    job.result.payload = null;
+    job.result.downloadedAt = new Date().toISOString();
+    job.updatedAt = new Date().toISOString();
+  }
+
   getJob(jobId) {
     return this.jobs.get(jobId) || null;
   }
@@ -99,6 +122,12 @@ class JobManager {
         ownerId == null ? job.userId == null : String(job.userId) === String(ownerId),
       )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  hasActiveJobForSource(filePath) {
+    return [...this.jobs.values()].some(
+      (job) => job.tempFilePath === filePath && ['pending', 'processing'].includes(job.status),
+    );
   }
 }
 

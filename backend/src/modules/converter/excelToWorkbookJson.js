@@ -1,12 +1,18 @@
 import xlsx from 'xlsx';
 import path from 'path';
+import { applyCellOverrides } from './cellOverrides.js';
 
 /**
  * Converts Excel workbook to structured Workbook JSON (TRD §7.6.B & §8.1-§8.8)
  * Preserves schemaVersion, workbook-level metadata, sheet order, dimensions,
  * cell types, formulas, and styles.
  */
-export function convertExcelToWorkbookJson(filePath, originalFilename = 'workbook.xlsx', selectedSheets = null) {
+export function convertExcelToWorkbookJson(
+  filePath,
+  originalFilename = 'workbook.xlsx',
+  selectedSheets = null,
+  overrides = [],
+) {
   const workbook = xlsx.readFile(filePath, {
     cellFormula: true,
     cellDates: true,
@@ -35,6 +41,8 @@ export function convertExcelToWorkbookJson(filePath, originalFilename = 'workboo
       });
       continue;
     }
+
+    applyCellOverrides(worksheet, overrides, sheetName);
 
     const range = xlsx.utils.decode_range(worksheet['!ref']);
     const rows = [];

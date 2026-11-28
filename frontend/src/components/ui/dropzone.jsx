@@ -1,40 +1,47 @@
-import { useState } from 'react';
-import { Upload, FileText } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
  * Dropzone file upload component (PRD §10.5 F).
- * Accepts .xlsx, .xls, .json, .js files. Emits selected file via onFileChange.
+ * Accepts the supported conversion formats and emits the selected file.
  */
-export function Dropzone({ onFileChange, accept = '.xlsx,.xls,.json,.js', disabled = false }) {
+export function Dropzone({ onFileChange, accept = '.xlsx,.xls,.xlsm,.json,.js,.bson', disabled = false }) {
+  const inputRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
 
-  const handleDrop = (e) => {
-    e.preventDefault();
+  const handleDrop = (event) => {
+    event.preventDefault();
     setIsDragActive(false);
-    const file = e.dataTransfer.files[0];
+    if (disabled) return;
+    const file = event.dataTransfer.files[0];
     if (file) onFileChange(file);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragActive(true);
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    if (!disabled) setIsDragActive(true);
   };
 
   const handleDragLeave = () => setIsDragActive(false);
 
-  const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileInputChange = (event) => {
+    const file = event.target.files[0];
     if (file) onFileChange(file);
+    event.target.value = '';
+  };
+
+  const openPicker = () => {
+    if (!disabled) inputRef.current?.click();
   };
 
   const dropzoneClasses = cn(
-    'flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all duration-150 cursor-pointer',
+    'flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all duration-150',
     disabled
-      ? 'opacity-50 cursor-not-allowed'
+      ? 'cursor-not-allowed opacity-50'
       : isDragActive
-        ? 'bg-[#E0E7FF] border-[#5145E5] text-[#5145E5]'
-        : 'bg-[#F6F5FF] border-[#C7D2FE] text-[#3730A3] hover:bg-[#EEF2FF] hover:border-[#818CF8]',
+        ? 'cursor-pointer border-brand-primary bg-brand-primary-surface text-brand-primary-deep'
+        : 'cursor-pointer border-brand-primary-border bg-surface-secondary text-brand-primary-deep hover:border-brand-primary-light hover:bg-brand-primary-soft',
   );
 
   return (
@@ -43,28 +50,33 @@ export function Dropzone({ onFileChange, accept = '.xlsx,.xls,.json,.js', disabl
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
+      onClick={openPicker}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openPicker();
+        }
+      }}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled || undefined}
     >
       <input
+        ref={inputRef}
         type="file"
         accept={accept}
         className="sr-only"
         onChange={handleFileInputChange}
         disabled={disabled}
+        tabIndex={-1}
       />
-      <div
-        className="flex flex-col items-center justify-center w-full"
-        onClick={() => !disabled && document.querySelector('input[type=file]').click()}
-        role="button"
-        tabIndex={0}
-      >
-        <Upload className={cn('w-10 h-10 mx-auto mb-4', disabled ? 'text-text-muted' : 'text-[#6366F1]')} />
-        <p className={cn('text-sm font-medium', disabled ? 'text-text-muted' : 'font-semibold')}>
-          {disabled ? 'Upload disabled' : 'Click to upload or drag and drop'}
-        </p>
-        <p className="text-xs text-text-muted mt-1">
-          Supported: .xlsx, .xls, .json, .js (max 50 MB)
-        </p>
-      </div>
+      <Upload className={cn('mb-4 h-10 w-10', disabled ? 'text-text-muted' : 'text-brand-primary')} aria-hidden="true" />
+      <p className={cn('text-body-md', disabled ? 'text-text-muted' : 'font-semibold text-text-primary')}>
+        {disabled ? 'Upload disabled' : 'Click to upload or drag and drop'}
+      </p>
+      <p className="mt-1 text-body-sm text-text-muted">
+        Supported: .xlsx, .xls, .xlsm, .json, .js, .bson (max 50 MB)
+      </p>
     </section>
   );
 }
