@@ -32,7 +32,7 @@ jobs:
       # native optional packages (npm/cli#4828), so Linux runners must resolve
       # platform binaries fresh instead of using `npm ci`.
       - name: Install workspaces
-        run: npm install --package-lock=false --no-audit --no-fund
+        run: npm install --package-lock=false --include=dev --no-audit --no-fund
 
       - name: Build frontend (client + prerender)
         run: npm run build --workspace=frontend
