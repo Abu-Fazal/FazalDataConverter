@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { requireOwnership, identifyUser, requireJobOwnership } from './ownership.js';
-import { jobManager } from '../services/jobManager.js';
+import { requireOwnership, identifyUser, requireJobOwnership } from '../../backend/src/middlewares/ownership.js';
+import { jobManager } from '../../backend/src/services/jobManager.js';
 
 /**
  * Unit tests for Chunk 4.3 — Server-Side Ownership Validation.

@@ -1,4 +1,5 @@
 import { get, post } from './api.client';
+import { API_BASE } from './apiBase';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const isMockAuth = !GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('your_google_client_id');
@@ -11,7 +12,7 @@ const isMockAuth = !GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('your_google_c
 export const authApi = {
   googleLogin: async () => {
     if (!isMockAuth) {
-      window.location.href = '/api/auth/google';
+      window.location.href = `${API_BASE}/auth/google`;
       return { success: false };
     }
     const res = await post('/auth/google', { credential: 'dev-mock-credential' });

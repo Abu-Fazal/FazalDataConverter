@@ -1,5 +1,4 @@
-import { describe, it, expect } from 'vitest';
-import { get, post, put, del } from './api.client';
+import { get, post, put, del } from '../../frontend/src/services/api.client.js';
 
 describe('API Client', () => {
   it('get is a function', () => {

@@ -87,7 +87,7 @@ export function AdminLockoutPage() {
 
   return (
     <div
-      className="flex min-h-screen w-full items-center justify-center px-6 py-8 text-text-primary"
+      className="flex min-h-screen w-full items-center justify-center overflow-hidden px-6 py-8 text-text-primary"
       style={{
         background:
           'radial-gradient(at 50% 30%, rgba(99, 102, 241, 0.12), transparent 60%), radial-gradient(at 80% 70%, rgba(168, 85, 247, 0.08), transparent 50%), #f8f9fc',

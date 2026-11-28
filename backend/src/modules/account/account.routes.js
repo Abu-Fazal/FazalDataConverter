@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
 import { requireAuth } from '../../middlewares/rbac.js';
+import { config } from '../../config/env.js';
 import { jobManager } from '../../services/jobManager.js';
 import { fileVault, DEFAULT_QUOTA_BYTES } from '../../services/fileVault.js';
 import { User } from '../../models/User.js';
@@ -138,6 +139,12 @@ router.post('/reauthenticate', requireAuth, async (req, res) => {
       });
     }
   } else {
+    if (config.env === 'production') {
+      return res.status(503).json({
+        error: 'AUTH_NOT_CONFIGURED',
+        message: 'Google re-authentication is not configured for this deployment.',
+      });
+    }
     logger.info('Simulated Google re-authentication in development mode');
   }
 

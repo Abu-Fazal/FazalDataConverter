@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FazalDataConverter — Secure Excel & JSON Converter</title>
+    <!-- Per-route title, meta, OG, and JSON-LD tags are injected here at build time by scripts/prerender.mjs. -->
+    <!--app-head-->
     <!-- Inter Font Only (PRD §10.6 & TRD §5.10) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,7 +16,7 @@
     />
   </head>
   <body class="bg-surface-app text-text-primary font-sans antialiased min-h-screen">
-    <div id="root"></div>
+    <div id="root"><!--app-html--></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

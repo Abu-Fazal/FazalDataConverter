@@ -19,21 +19,28 @@ import { AboutPage } from '../components/about/AboutPage.jsx';
 import { AccountPage } from '../components/account/AccountPage.jsx';
 import { HeroSection } from '../components/home/HeroSection.jsx';
 import { SecondarySection } from '../components/home/SecondarySection.jsx';
+import { AnswerSection } from '../components/home/AnswerSection.jsx';
+import { ConversionMatrixSection } from '../components/home/ConversionMatrixSection.jsx';
+import { FaqSection } from '../components/home/FaqSection.jsx';
 import { HistorySection } from '../components/home/HistorySection.jsx';
 import { Toaster } from '../components/ui/toaster.jsx';
 import { TooltipProvider } from '../components/ui/tooltip.jsx';
+import { SeoManager } from '../seo/SeoManager.jsx';
 
 function HomePage() {
   return (
     <>
       <HeroSection />
       <SecondarySection />
+      <AnswerSection />
+      <ConversionMatrixSection />
+      <FaqSection />
       <HistorySection />
     </>
   );
 }
 
-function AppShell() {
+export function AppShell() {
   const { pathname } = useLocation();
   // Figma sign_in uses shell-type=web_blank — no navbar/footer, full-bleed canvas.
   // The admin console also owns its 100%-height sidebar shell on /admin/*.
@@ -41,6 +48,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SeoManager />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-primary focus:px-4 focus:py-2 focus:text-text-inverse"
@@ -100,12 +108,16 @@ function AppShell() {
   );
 }
 
+export function AppProviders({ children }) {
+  return <TooltipProvider delayDuration={200}>{children}</TooltipProvider>;
+}
+
 export default function App() {
   return (
     <Router>
-      <TooltipProvider delayDuration={200}>
+      <AppProviders>
         <AppShell />
-      </TooltipProvider>
+      </AppProviders>
     </Router>
   );
 }

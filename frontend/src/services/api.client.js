@@ -4,7 +4,7 @@
  * All requests go through this single instance.
  */
 
-const API_BASE = '/api';
+import { API_BASE } from './apiBase';
 
 function buildError(response, errorData) {
   const error = new Error(errorData.message || `Request failed with status ${response.status}`);

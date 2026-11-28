@@ -1,0 +1,23 @@
+# FazalDataConverter
+
+> FazalDataConverter is a web-based converter for Excel and JSON data. It converts .xlsx, .xls, and .xlsm workbooks to Normal Data JSON or metadata-preserving Workbook JSON, and converts JSON back to Excel. It also supports Excel to binary BSON and data-only extraction from static JavaScript files.
+
+## Key facts
+
+- Supported inputs: .xlsx, .xls, .xlsm, JSON, BSON, and static JavaScript data.
+- Maximum input size: 50 MB per file.
+- Conversion targets in the documented test environment: up to 10 MB within 10 seconds; up to 50 MB within 60 seconds. Upload and download time is excluded.
+- Accuracy target: 100% of officially supported data elements are verified for values, structure, and supported metadata. Unsupported features are reported.
+- Safety: macros, embedded scripts, and dynamic code are never executed. Static JavaScript extraction reads approved data only.
+- Guests can convert files without an account. An account is required only for saved history and account features.
+- File access is scoped per account with server-side ownership validation. Temporary processing files are deleted after conversion, failure, or cancellation.
+
+## Pages
+
+- [Home](https://fazaldataconverter.com/): product overview, supported conversions, and frequently asked questions.
+- [Converter](https://fazaldataconverter.com/converter): upload a supported file and convert Excel to JSON, JSON to Excel, Excel to BSON, or extract static JavaScript data.
+- [About](https://fazaldataconverter.com/about): supported formats, verification coverage, privacy, and security rules.
+
+## Contact
+
+- Website: https://fazaldataconverter.com/

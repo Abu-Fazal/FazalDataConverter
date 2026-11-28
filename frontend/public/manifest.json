@@ -1,0 +1,17 @@
+{
+  "name": "FazalDataConverter",
+  "short_name": "FazalDataConverter",
+  "description": "Secure Excel to JSON and JSON to Excel converter with verified output.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fc",
+  "theme_color": "#5145E5",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ]
+}

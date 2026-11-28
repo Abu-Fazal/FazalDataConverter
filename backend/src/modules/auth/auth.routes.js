@@ -4,8 +4,13 @@ import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../../models/User.js';
+import { config } from '../../config/env.js';
 import { adminStore, LOCKOUT_THRESHOLD } from '../../services/adminStore.js';
 import { logger } from '../../utils/logger.js';
+
+function mockAuthAllowed() {
+  return config.env !== 'production';
+}
 
 const router = express.Router();
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -36,8 +41,15 @@ router.post('/google', async (req, res) => {
   try {
     let payload = null;
 
-    // In dev mode when client id is placeholder, permit safe mock auth for development testing
+    // Mock auth is a development/testing convenience only. Production must
+    // configure a real Google client so no stranger can obtain a session.
     if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID.includes('your_google_client_id')) {
+      if (!mockAuthAllowed()) {
+        return res.status(503).json({
+          error: 'AUTH_NOT_CONFIGURED',
+          message: 'Google sign-in is not configured for this deployment.',
+        });
+      }
       logger.info('Simulated Google OAuth authentication in development mode');
       payload = {
         sub: 'mock_google_id_123456789',
@@ -158,6 +170,14 @@ router.post('/admin/login', async (req, res) => {
   const configuredEmail = process.env.ADMIN_EMAIL;
   const configuredHash = process.env.ADMIN_PASSWORD_HASH;
   const isMock = !configuredEmail || !configuredHash;
+
+  if (isMock && !mockAuthAllowed()) {
+    return res.status(503).json({
+      error: 'ADMIN_AUTH_NOT_CONFIGURED',
+      message: 'Admin sign-in is not configured for this deployment.',
+    });
+  }
+
   const sourceIp = clientIp(req);
   const userAgent = req.headers['user-agent'] || 'unknown';
 

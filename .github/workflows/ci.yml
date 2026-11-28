@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, fazal]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build + test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install workspaces
+        run: npm ci
+
+      - name: Build frontend (client + prerender)
+        run: npm run build --workspace=frontend
+
+      - name: Run all tests (backend API, server, frontend QA, deployment)
+        run: npm test

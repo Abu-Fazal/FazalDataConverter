@@ -18,13 +18,29 @@ import accountRoutes from './modules/account/account.routes.js';
 
 const app = express();
 
+// Vercel terminates TLS at its edge; trust the proxy so secure cookies and
+// client IPs are handled correctly in production.
+app.set('trust proxy', 1);
+
 // Security Headers (TRD §2 & §3.3)
 app.use(helmet());
 
-// CORS configuration (Data Isolation)
+// CORS configuration (Data Isolation). Supports a comma-separated origin list
+// so production and Vercel preview domains can coexist.
+const allowedOrigins = config.corsOrigin
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Origin is not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

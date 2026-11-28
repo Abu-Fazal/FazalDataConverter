@@ -4,7 +4,7 @@
  * without an account.
  */
 
-const API_BASE = '/api';
+import { API_BASE } from './apiBase';
 
 export class ConverterApiError extends Error {
   constructor(message, status, code, details) {
