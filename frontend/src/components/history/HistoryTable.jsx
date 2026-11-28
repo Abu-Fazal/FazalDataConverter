@@ -5,6 +5,7 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { Download, Trash2, AlertCircle, Clock } from 'lucide-react';
@@ -13,8 +14,7 @@ import { Progress, StatusBadge } from '../ui/progress.jsx';
 import { cn } from '@/lib/utils';
 
 export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState([]);
   const [filter, setFilter] = useState('');
   const columnHelper = createColumnHelper();
@@ -61,7 +61,8 @@ export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
         </span>
       ),
     }),
-    columnHelper.id('actions', {
+    columnHelper.display({
+      id: 'actions',
       header: () => 'Actions',
       cell: (info) => {
         const row = info.row.original;
@@ -100,29 +101,18 @@ export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     state: {
       sorting,
-      columnFilters: [
-        { id: 'originalFileName', value: filter },
-        { id: 'targetFormat', value: filter },
-      ],
-      pagination: { pageIndex, pageSize },
+      columnFilters: [{ id: 'originalFileName', value: filter }],
+      pagination,
     },
     onSortingChange: setSorting,
-    onColumnFiltersChange: (updates) => {
-      const textFilter = updates.find((u) => u.id === 'originalFileName');
-      if (textFilter) setFilter(textFilter.value);
-    },
-    onPaginationChange: (updates) => {
-      if (updates.pageIndex) setPageIndex(updates.pageIndex);
-      if (updates.pageSize) setPageSize(updates.pageSize);
-    },
-    manualFiltering: true,
-    manualSorting: true,
+    onPaginationChange: setPagination,
   });
 
   const filteredData = table.getFilteredRowModel().rows;
-  const pageCount = Math.ceil(filteredData.length / pageSize);
+  const pageCount = Math.max(1, Math.ceil(filteredData.length / pagination.pageSize));
 
   return (
     <div className="space-y-6">
@@ -138,10 +128,10 @@ export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
           />
         </div>
         <div className="flex items-center gap-3">
-          <Button size="small" variant="outline" onClick={() => setPageSize(10)}>
+          <Button size="small" variant="outline" onClick={() => setPagination((p) => ({ ...p, pageIndex: 0, pageSize: 10 }))}>
             10 / page
           </Button>
-          <Button size="small" variant="outline" onClick={() => setPageSize(25)}>
+          <Button size="small" variant="outline" onClick={() => setPagination((p) => ({ ...p, pageIndex: 0, pageSize: 25 }))}>
             25 / page
           </Button>
         </div>
@@ -149,36 +139,35 @@ export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
 
       <div className="rounded-xl border border-border-subtle bg-surface-primary shadow-sm overflow-hidden">
         <table className="w-full text-sm text-left border-collapse">
-          <thead>
-            <tr className="bg-surface-secondary border-b border-border-subtle">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    const isSorted =
-                      sorting.find((s) => s.id === header.id)?.desc
-                        ? '↓'
-                        : sorting.find((s) => s.id === header.id)
-                          ? '↑'
-                          : '';
-                    return (
-                      <th
-                        key={header.id}
-                        className={cn(
-                          'px-4 py-3 font-medium text-text-secondary uppercase tracking-wider text-xs',
-                          header.isSorted
-                            ? 'text-brand-primary font-semibold'
-                            : 'hover:text-text-primary',
-                        )}
-                        onClick={header.getCanSort() ? header.getToggleSortingHandler() : undefined}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {isSorted && <span className="ml-1">{isSorted}</span>}
-                      </th>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tr>
+          <thead className="bg-surface-secondary border-b border-border-subtle">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  const isSorted =
+                    sorting.find((s) => s.id === header.id)?.desc
+                      ? '↓'
+                      : sorting.find((s) => s.id === header.id)
+                        ? '↑'
+                        : '';
+                  return (
+                    <th
+                      key={header.id}
+                      className={cn(
+                        'px-4 py-3 font-medium text-text-secondary uppercase tracking-wider text-xs',
+                        header.column.getCanSort() ? 'cursor-pointer select-none' : '',
+                        header.column.getIsSorted()
+                          ? 'text-brand-primary font-semibold'
+                          : 'hover:text-text-primary',
+                      )}
+                      onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {isSorted && <span className="ml-1">{isSorted}</span>}
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
           </thead>
           <tbody>
             {table.getPageModel().rows.map((row) => (
@@ -208,10 +197,10 @@ export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
         <div className="text-xs text-text-muted">
           Showing{' '}
           <span className="font-medium text-text-primary tabular-nums">
-            {pageIndex * pageSize + 1}
+            {filteredData.length === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1}
           </span>{' - '}
           <span className="font-medium text-text-primary tabular-nums">
-            {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
+            {Math.min((pagination.pageIndex + 1) * pagination.pageSize, filteredData.length)}
           </span>{' of '}
           <span className="font-medium text-text-primary tabular-nums">
             {filteredData.length}
@@ -221,16 +210,16 @@ export function HistoryTable({ data, onDownload, onDelete, onCancel }) {
           <Button
             size="small"
             variant="outline"
-            disabled={pageIndex === 0}
-            onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+            disabled={pagination.pageIndex === 0}
+            onClick={() => setPagination((p) => ({ ...p, pageIndex: Math.max(0, p.pageIndex - 1) }))}
           >
             Previous
           </Button>
           <Button
             size="small"
             variant="outline"
-            disabled={pageIndex >= pageCount - 1}
-            onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
+            disabled={pagination.pageIndex >= pageCount - 1}
+            onClick={() => setPagination((p) => ({ ...p, pageIndex: Math.min(pageCount - 1, p.pageIndex + 1) }))}
           >
             Next
           </Button>

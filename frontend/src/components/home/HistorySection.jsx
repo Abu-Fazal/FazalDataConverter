@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../ui/button.jsx';
 import { cn } from '@/lib/utils';
 

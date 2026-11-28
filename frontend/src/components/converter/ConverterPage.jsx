@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Layout, ArrowRight, Download, RefreshCw } from 'lucide-react';
+import { FileText, Layout, ArrowRight, Download, RefreshCw, Sheet } from 'lucide-react';
 import { Button } from '../ui/button.jsx';
 import { Dropzone } from '../ui/dropzone.jsx';
 import { SheetSelectorModal } from './SheetSelectorModal.jsx';

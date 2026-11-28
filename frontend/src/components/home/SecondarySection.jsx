@@ -28,18 +28,21 @@ export function SecondarySection() {
   return (
     <div className="bg-surface-primary py-12 px-4 max-w-5xl mx-auto">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 max-w-2xl mx-auto">
-        {features.map((feature) => (
+        {features.map((feature) => {
+          const Icon = feature.icon;
+          return (
           <div
             key={feature.title}
             className="group border border-border-subtle rounded-xl p-6 hover:bg-surface-secondary transition-colors"
           >
             <div className="h-12 w-12 group-hover:scale-110 group-hover:text-brand-primary flex items-center justify-center mb-4">
-              {feature.icon}
+              <Icon className="w-8 h-8 text-brand-primary" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-semibold text-text-primary group-hover:text-brand-primary mb-2">{feature.title}</h3>
             <p className="text-text-secondary line-clamp-2">{feature.description}</p>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -5,8 +5,6 @@ import { Button } from '../ui/button.jsx';
 import { HistoryTable } from './HistoryTable.jsx';
 import { get } from '@/services/api.client';
 
-const API_BASE = '/api';
-
 export function UserHistory() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
@@ -16,7 +14,7 @@ export function UserHistory() {
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const res = await apiClient.get('/jobs');
+        const res = await get('/jobs');
         setData(res.data || []);
       } catch (err) {
         setData([]);

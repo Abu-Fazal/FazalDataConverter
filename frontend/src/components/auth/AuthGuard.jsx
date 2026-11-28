@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
  * Protects routes - redirects unauthenticated users to login.
  * Can be configured to allow guest access.
  */
-export function AuthGuard({ children, allowGuest = false, redirectTo = '/auth/login' }) {
+export function AuthGuard({ children, allowGuest = false, redirectTo = '/login' }) {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

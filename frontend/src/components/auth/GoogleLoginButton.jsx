@@ -12,7 +12,8 @@ export function GoogleLoginButton({ onLogin, disabled = false }) {
     if (disabled) return;
 
     // In dev mode when GOOGLE_CLIENT_ID is placeholder, simulate auth
-    if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID.includes('your_google_client_id')) {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId || clientId.includes('your_google_client_id')) {
       const user = {
         id: 'mock_google_id_123456789',
         email: 'user@fazaldataconverter.com',

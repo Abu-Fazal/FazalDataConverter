@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button.jsx';
-import { cn } from '@/lib/utils';
+import { authApi } from '@/services/auth.api';
 
 /**
  * Login page (Chunk C).
@@ -14,11 +14,11 @@ export function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      // Will be handled by API call in later chunks
-      // For now, navigate to converter (guest mode)
-      setLoading(false);
-      navigate('/converter');
-    } catch (err) {
+      const res = await authApi.googleLogin();
+      if (res?.success) {
+        navigate('/converter');
+      }
+    } finally {
       setLoading(false);
     }
   };

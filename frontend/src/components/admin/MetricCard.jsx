@@ -23,7 +23,7 @@ export function MetricCard({ title, value, delta, type = 'users' }) {
           <p className="text-sm font-medium text-text-secondary">{title}</p>
           <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>
           {delta && (
-            <p className={`text-xs font-medium ${delta >= 0 ? 'text-[#047857]' : 'text-[#B91C1D]'}`}>
+            <p className={`text-xs font-medium ${delta >= 0 ? 'text-success-text' : 'text-error-text'}`}>
               {delta >= 0 ? '+' : ''}{delta}
             </p>
           )}

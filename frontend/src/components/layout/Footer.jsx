@@ -34,19 +34,19 @@ export function Footer() {
             <p className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-3">Resources</p>
             <div className="space-y-1">
               <Link
-                href="/"
+                to="/"
                 className="block text-xs text-text-muted hover:text-brand-primary transition-colors"
               >
                 Privacy
               </Link>
               <Link
-                href="/"
+                to="/"
                 className="block text-xs text-text-muted hover:text-brand-primary transition-colors"
               >
                 Terms
               </Link>
               <Link
-                href="/"
+                to="/"
                 className="block text-xs text-text-muted hover:text-brand-primary transition-colors"
               >
                 Help

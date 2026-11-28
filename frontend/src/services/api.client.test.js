@@ -1,23 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { get, post, put, del } from './api.client';
 
-describe('API Client (Chunk G)', () => {
-  it('get function exists and is a function', () => {
-    const { get } = require('../services/api.client');
+describe('API Client', () => {
+  it('get is a function', () => {
     expect(typeof get).toBe('function');
   });
 
-  it('post function exists and is a function', () => {
-    const { post } = require('../services/api.client');
+  it('post is a function', () => {
     expect(typeof post).toBe('function');
   });
 
-  it('put function exists and is a function', () => {
-    const { put } = require('../services/api.client');
+  it('put is a function', () => {
     expect(typeof put).toBe('function');
   });
 
-  it('del function exists and is a function', () => {
-    const { del } = require('../services/api.client');
+  it('del is a function', () => {
     expect(typeof del).toBe('function');
   });
 });
