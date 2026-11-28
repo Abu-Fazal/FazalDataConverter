@@ -1,18 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, User, Bell, HelpCircle, LogOut } from 'lucide-react';
-import { Button } from './ui/button.jsx';
+import { Button } from '../../components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 
-/**
- * Responsive top navigation bar (Chunk 5.1).
- *
- * Presentational — accepts optional `user` and `onLogout` props so the
- * auth layer (later chunks) can drive the signed-in state. Renders in
- * guest mode by default.
- */
 export function Navbar({ user, onLogout }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -21,10 +15,25 @@ export function Navbar({ user, onLogout }) {
     { name: 'Admin', href: '/admin' },
   ];
 
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleLinkClick = () => {
+    if (isMenuOpen && isMobile) setIsMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newIsMobile = window.innerWidth < 768;
+      if (newIsMobile !== isMobile) setIsMobile(newIsMobile);
+      if (newIsMobile && isMenuOpen) setIsMenuOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMenuOpen, isMobile]);
+
   return (
     <header className="sticky top-0 z-50 border-b border-border-subtle bg-surface-primary/95 backdrop-blur supports-[backdrop-filter]:bg-surface-primary/80">
       <div className="px-6 h-14 flex items-center justify-between">
-        {/* Brand */}
         <Link to="/" className="flex items-center space-x-3">
           <div className="h-8 w-8 rounded-lg bg-gradient-brand flex items-center justify-center text-white font-bold text-sm shadow-sm">
             FD
@@ -33,8 +42,6 @@ export function Navbar({ user, onLogout }) {
             FazalDataConverter
           </span>
         </Link>
-
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center space-x-1">
           {navLinks.map((link) => (
             <Link
@@ -46,8 +53,6 @@ export function Navbar({ user, onLogout }) {
             </Link>
           ))}
         </nav>
-
-        {/* Right actions */}
         <div className="flex items-center space-x-3">
           <Button asChild size="small" variant="ghost">
             <Link to="/" className="flex items-center space-x-1.5">
@@ -65,7 +70,7 @@ export function Navbar({ user, onLogout }) {
                 <LogOut className="w-4 h-4" />
               </Button>
               <div className="relative">
-                <Button size="small" variant="ghost" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <Button size="small" variant="ghost" onClick={toggleMenu}>
                   <Bell className={cn('w-5 h-5', isMenuOpen ? 'text-brand-primary' : 'text-text-muted')} />
                 </Button>
               </div>
@@ -75,28 +80,27 @@ export function Navbar({ user, onLogout }) {
               Sign in
             </Button>
           )}
-          {/* Mobile menu toggle */}
           <Button
             size="small"
             variant="ghost"
-            className="md:hidden"
+            className={cn('md:hidden', isMenuOpen ? 'text-brand-primary' : 'text-text-muted')}
             aria-label="Open main menu"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={toggleMenu}
           >
             {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
       </div>
-
-      {/* Mobile menu panel */}
-      {isMenuOpen && (
+      {isMenuOpen && isMobile && (
         <div className="md:hidden border-t border-border-subtle bg-surface-primary">
           <div className="px-6 pb-4 pt-2 space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => {
+                  toggleMenu();
+                }}
                 className="block px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-surface-secondary hover:text-brand-primary rounded-lg transition-colors"
               >
                 {link.name}

@@ -1,0 +1,189 @@
+/**
+ * Design tokens — single runtime source (TRD §5.9, PRD §10.5).
+ * Inter only. Do not introduce colors outside this file.
+ */
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Primary Indigo */
+  --color-primary: #5145e5;
+  --color-primary-deep: #3730a3;
+  --color-primary-dark: #4338ca;
+  --color-primary-bright: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-soft: #eef2ff;
+  --color-primary-surface: #e0e7ff;
+  --color-primary-border: #c7d2fe;
+
+  /* Secondary Violet */
+  --color-secondary: #7c3aed;
+  --color-secondary-deep: #5b21b6;
+  --color-secondary-dark: #6d28d9;
+  --color-secondary-bright: #9333ea;
+  --color-secondary-light: #a78bfa;
+  --color-secondary-soft: #f5f0ff;
+  --color-secondary-surface: #ede9fe;
+  --color-secondary-border: #ddd6fe;
+
+  /* Accents */
+  --color-accent-blue: #3b82f6;
+  --color-accent-blue-dark: #1d4ed8;
+  --color-accent-blue-light: #93c5fd;
+  --color-accent-blue-soft: #eff6ff;
+  --color-accent-blue-border: #bfdbfe;
+  --color-accent-cyan: #06b6d4;
+  --color-accent-cyan-dark: #0891b2;
+  --color-accent-cyan-light: #67e8f9;
+  --color-accent-cyan-soft: #ecfeff;
+  --color-accent-cyan-border: #a5f3fc;
+  --color-accent-pink: #ec4899;
+  --color-accent-pink-dark: #db2777;
+  --color-accent-pink-light: #f9a8d4;
+  --color-accent-pink-soft: #fdf2f8;
+  --color-accent-pink-border: #fbcfe8;
+
+  /* Surfaces */
+  --color-surface-app: #f8f9fc;
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f5f6fc;
+  --color-surface-tertiary: #f0f2f8;
+  --color-surface-cool: #f0f3ff;
+  --color-surface-violet: #f6f1ff;
+  --color-surface-muted: #f3f4f6;
+  --color-surface-inverse: #151525;
+
+  /* Text */
+  --color-text-primary: #151525;
+  --color-text-secondary: #55566f;
+  --color-text-muted: #85869b;
+  --color-text-subtle: #a1a1b5;
+  --color-text-disabled: #b8bac9;
+  --color-text-inverse: #ffffff;
+  --color-text-brand: #5145e5;
+  --color-text-brand-secondary: #7c3aed;
+  --color-text-link: #4f46e5;
+  --color-text-link-hover: #3730a3;
+
+  /* Borders */
+  --color-border-subtle: #e6e8f0;
+  --color-border-strong: #d5d8e6;
+  --color-border-hover: #c5c8d8;
+  --color-border-highlight: #c7d2fe;
+  --color-border-brand: #5145e5;
+  --color-border-faint: #f0f1f5;
+
+  /* Buttons */
+  --color-button-primary: #5145e5;
+  --color-button-primary-hover: #4338ca;
+  --color-button-primary-active: #3730a3;
+  --color-button-focus-ring: #a5b4fc;
+  --color-button-disabled-bg: #e5e7eb;
+  --color-button-disabled-text: #9ca3af;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-active: #991b1b;
+
+  /* Inputs */
+  --color-input-bg: #ffffff;
+  --color-input-placeholder: #85869b;
+  --color-input-border: #e6e8f0;
+  --color-input-border-hover: #c5c8d8;
+  --color-input-border-focus: #6366f1;
+  --color-input-ring-focus: #c7d2fe;
+  --color-input-border-error: #ef4444;
+  --color-input-bg-error: #fef2f2;
+  --color-input-border-success: #10b981;
+  --color-input-bg-disabled: #f3f4f6;
+
+  /* Dropzone */
+  --color-dropzone-bg: #f6f5ff;
+  --color-dropzone-border: #c7d2fe;
+  --color-dropzone-text: #3730a3;
+  --color-dropzone-icon: #6366f1;
+  --color-dropzone-bg-hover: #eef2ff;
+  --color-dropzone-border-hover: #818cf8;
+  --color-dropzone-bg-active: #e0e7ff;
+  --color-dropzone-border-active: #5145e5;
+
+  /* Semantic: success */
+  --color-success-bg: #ecfdf5;
+  --color-success-text: #047857;
+  --color-success-border: #a7f3d0;
+  --color-success-dot: #10b981;
+  /* Semantic: warning */
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #b45309;
+  --color-warning-border: #fde68a;
+  --color-warning-dot: #f59e0b;
+  /* Semantic: error */
+  --color-error-bg: #fef2f2;
+  --color-error-text: #b91c1c;
+  --color-error-border: #fecaca;
+  --color-error-dot: #ef4444;
+  /* Semantic: info */
+  --color-info-bg: #eff6ff;
+  --color-info-text: #1d4ed8;
+  --color-info-border: #bfdbfe;
+  --color-info-dot: #3b82f6;
+  /* Semantic: processing */
+  --color-processing-bg: #eef2ff;
+  --color-processing-text: #4338ca;
+  --color-processing-border: #c7d2fe;
+  --color-processing-dot: #6366f1;
+  /* Semantic: neutral */
+  --color-neutral-bg: #f3f4f6;
+  --color-neutral-text: #4b5563;
+  --color-neutral-border: #e5e7eb;
+  --color-neutral-dot: #6b7280;
+
+  /* Tables */
+  --color-table-header-bg: #f8f9fc;
+  --color-table-header-text: #55566f;
+  --color-table-border: #e6e8f0;
+  --color-table-row-hover: #f8f9fc;
+  --color-table-row-selected-bg: #eef2ff;
+  --color-table-row-selected-text: #3730a3;
+
+  /* Sidebar / nav */
+  --color-nav-bg: #ffffff;
+  --color-nav-text: #55566f;
+  --color-nav-icon: #85869b;
+  --color-nav-hover-bg: #f5f6fc;
+  --color-nav-hover-text: #3730a3;
+  --color-nav-active-bg: #eef2ff;
+  --color-nav-active-text: #5145e5;
+
+  /* Overlay / scrim */
+  --overlay-dialog: rgba(21, 21, 37, 0.5);
+
+  /* Progress */
+  --color-progress-track: #e6e8f0;
+  --color-progress-fill: #5145e5;
+  --color-progress-highlight: #a78bfa;
+  --color-progress-indicator: #6366f1;
+
+  /* Gradients (10 approved) */
+  --gradient-brand: linear-gradient(120deg, #4f46e5 0%, #7c3aed 48%, #a855f7 100%);
+  --gradient-brand-hover: linear-gradient(120deg, #4338ca 0%, #6d28d9 48%, #9333ea 100%);
+  --gradient-brand-active: linear-gradient(120deg, #3730a3 0%, #5b21b6 48%, #7e22ce 100%);
+  --gradient-electric: linear-gradient(135deg, #2563eb 0%, #6366f1 48%, #9333ea 100%);
+  --gradient-aurora: linear-gradient(120deg, #6366f1 0%, #8b5cf6 35%, #d946ef 68%, #38bdf8 100%);
+  --gradient-lavender: linear-gradient(135deg, #eef2ff 0%, #f5f0ff 55%, #fdf2f8 100%);
+  --gradient-ice: linear-gradient(135deg, #eff6ff 0%, #ecfeff 50%, #f0fdfa 100%);
+  --gradient-deep: linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #7c3aed 100%);
+  --gradient-indigo-cyan: linear-gradient(120deg, #4f46e5 0%, #3b82f6 55%, #06b6d4 100%);
+  --gradient-violet-pink: linear-gradient(120deg, #7c3aed 0%, #a855f7 55%, #ec4899 100%);
+  --gradient-white-lavender: linear-gradient(180deg, #ffffff 0%, #f8f9fc 100%);
+  --gradient-ambient-glow: radial-gradient(ellipse at top left, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 55%);
+  --gradient-progress: linear-gradient(90deg, #4f46e5 0%, #7c3aed 55%, #06b6d4 100%);
+
+  /* Shadows */
+  --shadow-card: 0 2px 8px rgba(21, 21, 37, 0.04);
+  --shadow-card-hover: 0 8px 24px rgba(21, 21, 37, 0.08);
+  --shadow-panel: 0 12px 32px rgba(21, 21, 37, 0.08);
+  --shadow-dialog: 0 24px 64px rgba(21, 21, 37, 0.16);
+  --shadow-dropdown: 0 8px 24px rgba(21, 21, 37, 0.1);
+  --shadow-brand-ambient: 0 8px 32px rgba(81, 69, 229, 0.16);
+  --shadow-violet-ambient: 0 8px 32px rgba(124, 58, 237, 0.14);
+  --shadow-focus-ring: 0 0 0 4px rgba(99, 102, 241, 0.16);
+}

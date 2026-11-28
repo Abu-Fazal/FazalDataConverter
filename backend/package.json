@@ -21,7 +21,6 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
-    "fazaldataconverter-monorepo": "file:..",
     "google-auth-library": "^9.15.0",
     "helmet": "^8.0.0",
     "mongoose": "^8.9.5",

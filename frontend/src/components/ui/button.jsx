@@ -12,7 +12,7 @@ const buttonVariants = {
   ghost:
     'bg-transparent text-text-secondary hover:bg-surface-secondary focus-visible:ring-brand-primary focus-visible:ring-2 focus-visible:ring-offset-2',
   danger:
-    'bg-text-error text-text-inverse hover:bg-[#B91C1C] focus-visible:ring-text-error focus-visible:ring-2 focus-visible:ring-offset-2',
+    'bg-danger text-text-inverse hover:bg-danger-hover focus-visible:ring-danger focus-visible:ring-2 focus-visible:ring-offset-2',
   link: 'text-brand-primary underline-offset-4 hover:underline focus-visible:ring-brand-primary focus-visible:ring-2',
 };
 
