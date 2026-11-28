@@ -92,6 +92,14 @@ class JobManager {
   getJob(jobId) {
     return this.jobs.get(jobId) || null;
   }
+
+  listJobs(ownerId) {
+    return [...this.jobs.values()]
+      .filter((job) =>
+        ownerId == null ? job.userId == null : String(job.userId) === String(ownerId),
+      )
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
 }
 
 export const jobManager = new JobManager();

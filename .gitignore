@@ -37,3 +37,7 @@ Thumbs.db
 coverage/
 playwright-report/
 test-results/
+
+# Agent verification scratch
+.tmp-cdp/
+.tmp-chrome-profile/

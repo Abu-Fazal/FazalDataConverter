@@ -103,6 +103,18 @@ export default {
           hover: '#B91C1C',
           active: '#991B1B',
         },
+        input: {
+          bg: '#FFFFFF',
+          placeholder: '#85869B',
+          border: '#E6E8F0',
+          'border-hover': '#C5C8D8',
+          'border-focus': '#6366F1',
+          'ring-focus': '#C7D2FE',
+          'border-error': '#EF4444',
+          'bg-error': '#FEF2F2',
+          'border-success': '#10B981',
+          'bg-disabled': '#F3F4F6',
+        },
         success: {
           bg: '#ECFDF5',
           text: '#047857',
@@ -139,6 +151,25 @@ export default {
           border: '#E5E7EB',
           dot: '#6B7280',
         },
+      },
+      keyframes: {
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(2px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'overlay-show': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'dialog-show': {
+          from: { opacity: '0', transform: 'translate(-50%, -48%) scale(0.96)' },
+          to: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 120ms ease-out',
+        'overlay-show': 'overlay-show 150ms ease-out',
+        'dialog-show': 'dialog-show 180ms ease-out',
       },
       boxShadow: {
         card: '0 2px 8px rgba(21, 21, 37, 0.04)',

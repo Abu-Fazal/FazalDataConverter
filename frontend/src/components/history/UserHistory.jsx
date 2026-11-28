@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../ui/button.jsx';
+import { Skeleton } from '../ui/skeleton.jsx';
 import { HistoryTable } from './HistoryTable.jsx';
 import { get } from '@/services/api.client';
 
@@ -18,6 +20,9 @@ export function UserHistory() {
         setData(res.data || []);
       } catch (err) {
         setData([]);
+        toast.error('Could not load conversion history', {
+          description: 'Please check your connection and try again.',
+        });
       } finally {
         setLoading(false);
       }
@@ -38,6 +43,9 @@ export function UserHistory() {
   async function confirmDelete() {
     if (!deleteConfirm) return;
     setData((prev) => prev.filter((item) => item.id !== deleteConfirm.id));
+    toast.success('File removed from history', {
+      description: deleteConfirm.fileName,
+    });
     setDeleteConfirm(null);
   }
 
@@ -47,9 +55,14 @@ export function UserHistory() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-        <RefreshCw className="w-10 h-10 text-[#6366F1] animate-spin" />
-        <h2 className="text-lg font-semibold text-text-primary">Loading history...</h2>
+      <div className="space-y-6" aria-busy="true" aria-label="Loading history">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-10 w-full" />
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
       </div>
     );
   }
@@ -63,12 +76,15 @@ export function UserHistory() {
           </Button>
           <div>
             <h1 className="text-xl font-bold text-text-primary">Conversion History</h1>
-            <p className="text-text-muted text-sm">
+            <p className="text-text-secondary text-sm">
               Manage your uploaded and converted files.
             </p>
           </div>
         </div>
-        <Button size="small">New Conversion</Button>
+        <Button size="small" onClick={() => navigate('/converter')}>
+          <Plus className="w-4 h-4 mr-1" aria-hidden="true" />
+          New Conversion
+        </Button>
       </div>
 
       {deleteConfirm && (
@@ -101,6 +117,7 @@ export function UserHistory() {
               item.id === id ? { ...item, status: 'cancelled', progress: 0 } : item,
             ),
           );
+          toast.info('Conversion cancelled');
         }}
       />
     </div>

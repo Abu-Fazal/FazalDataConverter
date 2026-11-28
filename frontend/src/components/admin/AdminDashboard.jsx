@@ -1,4 +1,3 @@
-import { UserHistory } from '../history/UserHistory.jsx';
 import { MetricCard } from './MetricCard.jsx';
 import { FailedJobsTable } from './FailedJobsTable.jsx';
 import { SecurityLogsTable } from './SecurityLogsTable.jsx';
@@ -30,16 +29,9 @@ export function AdminDashboard() {
         <MetricCard title="Maintenance Mode" value="Off" delta={0} type="status" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Failed Jobs */}
-        <div className="lg:col-span-2">
-          <FailedJobsTable />
-        </div>
-
-        {/* Security Logs */}
-        <div>
-          <SecurityLogsTable />
-        </div>
+      <div className="space-y-8">
+        <FailedJobsTable />
+        <SecurityLogsTable />
       </div>
     </div>
   );

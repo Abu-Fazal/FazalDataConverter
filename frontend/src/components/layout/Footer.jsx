@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export function Footer() {
   return (
     <footer className="border-t border-border-subtle bg-surface-primary">
-      <div className="max-w-5xl mx-auto py-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 gap-6">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
@@ -58,8 +58,8 @@ export function Footer() {
           <div>
             <p className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">Policy</p>
             <div className="space-y-1 text-xs text-text-muted">
-              <span>Max file size: 50 MB</span>
-              <span>Data Only Mode — No macro execution</span>
+              <span className="block">Max file size: 50 MB</span>
+              <span className="block">Data Only Mode — No macro execution</span>
             </div>
           </div>
         </div>

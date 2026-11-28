@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../../models/User.js';
 import { logger } from '../../utils/logger.js';
@@ -43,20 +44,8 @@ router.post('/google', async (req, res) => {
 
     // Find or create user in MongoDB
     let user = null;
-    try {
-      user = await User.findOne({ email: payload.email });
-      if (!user) {
-        user = await User.create({
-          googleId: payload.sub,
-          email: payload.email,
-          name: payload.name || 'User',
-          avatarUrl: payload.picture || '',
-          role: 'registered',
-        });
-        logger.info('New registered user created via Google OAuth', { email: user.email });
-      }
-    } catch (dbErr) {
-      // In offline/no-db dev mode, return session user object directly
+    if (mongoose.connection.readyState !== 1) {
+      // Offline dev mode: no DB connection, skip buffering and use a session-only user
       user = {
         _id: 'mock_mongo_user_id',
         email: payload.email,
@@ -64,6 +53,29 @@ router.post('/google', async (req, res) => {
         avatarUrl: payload.picture,
         role: 'registered',
       };
+    } else {
+      try {
+        user = await User.findOne({ email: payload.email });
+        if (!user) {
+          user = await User.create({
+            googleId: payload.sub,
+            email: payload.email,
+            name: payload.name || 'User',
+            avatarUrl: payload.picture || '',
+            role: 'registered',
+          });
+          logger.info('New registered user created via Google OAuth', { email: user.email });
+        }
+      } catch (dbErr) {
+        // In offline/no-db dev mode, return session user object directly
+        user = {
+          _id: 'mock_mongo_user_id',
+          email: payload.email,
+          name: payload.name,
+          avatarUrl: payload.picture,
+          role: 'registered',
+        };
+      }
     }
 
     // Bind authenticated user to session

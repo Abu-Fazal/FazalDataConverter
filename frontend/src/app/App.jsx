@@ -11,6 +11,8 @@ import { AuthGuard } from '../components/auth/AuthGuard.jsx';
 import { HeroSection } from '../components/home/HeroSection.jsx';
 import { SecondarySection } from '../components/home/SecondarySection.jsx';
 import { HistorySection } from '../components/home/HistorySection.jsx';
+import { Toaster } from '../components/ui/toaster.jsx';
+import { TooltipProvider } from '../components/ui/tooltip.jsx';
 
 function HomePage() {
   return (
@@ -25,30 +27,39 @@ function HomePage() {
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col justify-between">
-        <Navbar />
+      <TooltipProvider delayDuration={200}>
+        <div className="min-h-screen flex flex-col justify-between">
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand-primary focus:px-4 focus:py-2 focus:text-text-inverse"
+          >
+            Skip to main content
+          </a>
+          <Navbar />
 
-        <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/converter" element={<ConverterPage />} />
-            <Route path="/converter/progress/:jobId" element={<ConversionProgress />} />
-            <Route path="/converter/error/:jobId" element={<ErrorReport />} />
-            <Route
-              path="/history"
-              element={
-                <AuthGuard>
-                  <UserHistory />
-                </AuthGuard>
-              }
-            />
-            <Route path="/admin" element={<AdminDashboard />} />
-          </Routes>
-        </main>
+          <main id="main-content" className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/converter" element={<ConverterPage />} />
+              <Route path="/converter/progress/:jobId" element={<ConversionProgress />} />
+              <Route path="/converter/error/:jobId" element={<ErrorReport />} />
+              <Route
+                path="/history"
+                element={
+                  <AuthGuard>
+                    <UserHistory />
+                  </AuthGuard>
+                }
+              />
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Routes>
+          </main>
 
-        <Footer />
-      </div>
+          <Footer />
+          <Toaster />
+        </div>
+      </TooltipProvider>
     </Router>
   );
 }

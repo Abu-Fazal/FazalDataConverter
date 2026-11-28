@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RefreshCw, Download, ArrowLeft, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button.jsx';
-import { Progress, StatusBadge } from '../ui/progress.jsx';
+import { Progress } from '../ui/progress.jsx';
+import { StatusBadge } from '../ui/badge.jsx';
 
 const API_BASE = '/api';
 

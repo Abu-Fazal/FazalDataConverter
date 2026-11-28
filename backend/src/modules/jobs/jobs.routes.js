@@ -6,6 +6,17 @@ import { jobManager } from '../../services/jobManager.js';
 const router = express.Router();
 
 /**
+ * GET /api/jobs
+ * Lists the authenticated user's own conversion jobs, newest first.
+ */
+router.get('/', identifyUser, requireAuth, (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: jobManager.listJobs(req.userId),
+  });
+});
+
+/**
  * GET /api/jobs/status/:jobId
  * Returns current progress, processing stage, and converted results when complete (TRD §7.15).
  * Server-side ownership validation: a user can only poll their own job.

@@ -1,10 +1,11 @@
-import { ArrowUp, ArrowDown, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowUp, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Card } from '../ui/card.jsx';
 
 const variants = {
   users: { icon: ArrowUp, color: 'text-brand-primary', bg: 'bg-brand-primary-soft' },
-  conversions: { icon: CheckCircle2, color: 'text-[#047857]', bg: 'bg-[#ECFDF5]' },
-  failure: { icon: AlertCircle, color: 'text-[#B91C1C]', bg: 'bg-[#FEF2F2]' },
-  status: { icon: Clock, color: 'text-[#4338CA]', bg: 'bg-[#EEF2FF]' },
+  conversions: { icon: CheckCircle2, color: 'text-success-text', bg: 'bg-success-bg' },
+  failure: { icon: AlertCircle, color: 'text-error-text', bg: 'bg-error-bg' },
+  status: { icon: Clock, color: 'text-processing-text', bg: 'bg-processing-bg' },
 };
 
 /**
@@ -17,21 +18,21 @@ export function MetricCard({ title, value, delta, type = 'users' }) {
   const bg = variants[type]?.bg || 'bg-surface-secondary';
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-primary p-6 shadow-sm">
+    <Card className="p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-text-secondary">{title}</p>
           <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>
-          {delta && (
+          {delta != null && (
             <p className={`text-xs font-medium ${delta >= 0 ? 'text-success-text' : 'text-error-text'}`}>
               {delta >= 0 ? '+' : ''}{delta}
             </p>
           )}
         </div>
         <div className={`p-2 rounded-lg ${bg}`}>
-          <Icon className={`w-5 h-5 ${color}`} />
+          <Icon className={`w-5 h-5 ${color}`} aria-hidden="true" />
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
