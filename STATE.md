@@ -112,7 +112,8 @@ Whenever an agent starts a new session, it reads this file first to know exactly
 - Root `npm run build` builds the frontend only (`node src/server.js` needs no build); Vercel runs `npm run build --workspace=frontend`.
 - Vercel: root project serves the frontend and `/api/*` functions from `api/`; a separate project can use `backend/vercel.json`. Production requires real `GOOGLE_CLIENT_ID`, `ADMIN_EMAIL` + bcrypt `ADMIN_PASSWORD_HASH`, and `MONGODB_URI` (sessions) — otherwise mock sign-in returns 503 by design. Temp files go to `/tmp/fazal-storage`.
 - `.github/workflows/ci.yml` runs on push to `main`/`fazal` and on PRs (Node 20 + 22): install, frontend build, `npm test`. Vercel deploys from the same GitHub repo independently of CI.
-- Lockfiles were generated on Windows and list only win32 native optional packages (npm/cli#4828), so Linux builds (Vercel + CI) install with `npm install --package-lock=false` to resolve `@rollup/rollup-linux-x64-gnu` / `@esbuild/linux-x64` fresh. Long-term fix: regenerate `package-lock.json` on Linux and commit it, then remove the override.
+- Lockfiles were generated on Windows and list only win32 native optional packages (npm/cli#4828), so Linux builds (Vercel + CI) install with `npm install --package-lock=false --include=dev` to resolve `@rollup/rollup-linux-x64-gnu` / `@esbuild/linux-x64` fresh. `--include=dev` is required because Vercel installs with `NODE_ENV=production`, which otherwise skips Vite. Long-term fix: regenerate `package-lock.json` on Linux and commit it, then remove the override.
+- Vercel's npm (v12+) blocks dependency install scripts by default; root `package.json` has `allowScripts: { "bcrypt@5.1.1": true }` so bcrypt's native build runs. Do NOT add `NODE_ENV` as a Vercel project env var — it is set automatically and breaks dev-dependency installation.
 
 ---
 

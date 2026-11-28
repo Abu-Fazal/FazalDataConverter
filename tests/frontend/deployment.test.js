@@ -14,8 +14,15 @@ function readJson(relativePath) {
 describe('Vercel frontend project (repository root)', () => {
   const config = readJson('vercel.json');
 
-  it('installs with fresh platform resolution to avoid the npm optional-deps lockfile bug', () => {
+  it('installs with fresh platform resolution and build tooling', () => {
     expect(config.installCommand).toContain('--package-lock=false');
+    // Vercel sets NODE_ENV=production; without --include=dev npm skips vite.
+    expect(config.installCommand).toContain('--include=dev');
+  });
+
+  it('allowlists the bcrypt native build for npm 12 install-script blocking', () => {
+    const rootPackage = readJson('package.json');
+    expect(rootPackage.allowScripts).toMatchObject({ 'bcrypt@5.1.1': true });
   });
 
   it('builds the frontend workspace and serves frontend/dist', () => {
