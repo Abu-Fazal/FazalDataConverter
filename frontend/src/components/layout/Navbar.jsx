@@ -12,6 +12,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  ShieldCheck,
   User,
   UserCog,
   X,
@@ -114,11 +115,21 @@ export function Navbar() {
 
   const displayName = user?.name || user?.email || 'Account';
   const initial = displayName.charAt(0).toUpperCase();
+  const isAdmin = user?.role === 'admin';
+  const adminLink = { name: 'Admin Console', href: '/admin', icon: ShieldCheck };
   const links = user
-    ? [...primaryLinks, { name: 'Account', href: '/account', icon: UserCog }]
+    ? [
+        ...primaryLinks,
+        { name: 'Account', href: '/account', icon: UserCog },
+        ...(isAdmin ? [adminLink] : []),
+      ]
     : primaryLinks;
   const mobileLinks = user
-    ? [...drawerLinks, { name: 'Account Settings', href: '/account', icon: UserCog }]
+    ? [
+        ...drawerLinks,
+        { name: 'Account Settings', href: '/account', icon: UserCog },
+        ...(isAdmin ? [adminLink] : []),
+      ]
     : drawerLinks;
 
   const wordmark = (
@@ -238,6 +249,15 @@ export function Navbar() {
                   ) : null}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin ? (
+                  <>
+                    <DropdownMenuItem onSelect={() => navigate('/admin')}>
+                      <ShieldCheck size={16} aria-hidden="true" />
+                      Admin console
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                ) : null}
                 <DropdownMenuItem onSelect={() => navigate('/account')}>
                   <UserCog size={16} aria-hidden="true" />
                   Account settings

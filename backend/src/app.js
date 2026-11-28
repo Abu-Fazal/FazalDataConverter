@@ -5,6 +5,10 @@ import { config } from './config/env.js';
 import { logger } from './utils/logger.js';
 import { createSessionMiddleware } from './middlewares/session.js';
 import { identifyUser } from './middlewares/ownership.js';
+import { enforceMaintenance } from './middlewares/maintenance.js';
+import { enforceAccountStatus } from './middlewares/accountStatus.js';
+import { adminStore } from './services/adminStore.js';
+import { getSystemStatus } from './modules/admin/admin.service.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import converterRoutes from './modules/converter/converter.routes.js';
 import filesRoutes from './modules/files/files.routes.js';
@@ -46,19 +50,34 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     limits: {
-      maxFileSize: '50 MB',
+      maxFileSize: `${adminStore.getSettings().maxFileSizeMb} MB`,
       dataOnlyMode: true,
+    },
+  });
+});
+
+// Public service status used by the maintenance banner (PRD §3.7).
+app.get('/api/system/status', (req, res) => {
+  const system = getSystemStatus();
+  res.status(200).json({
+    success: true,
+    data: {
+      status: system.status,
+      maintenanceMode: system.maintenanceMode,
+      maintenanceMessage: system.maintenanceMessage,
+      maxFileSizeMb: system.maxFileSizeMb,
+      serverTime: system.serverTime,
     },
   });
 });
 
 // Feature Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/converter', converterRoutes);
-app.use('/api/files', filesRoutes);
-app.use('/api/jobs', jobsRoutes);
+app.use('/api/converter', enforceMaintenance, enforceAccountStatus, converterRoutes);
+app.use('/api/files', enforceMaintenance, enforceAccountStatus, filesRoutes);
+app.use('/api/jobs', enforceMaintenance, enforceAccountStatus, jobsRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/account', accountRoutes);
+app.use('/api/account', enforceMaintenance, enforceAccountStatus, accountRoutes);
 
 // Central 404 handler
 app.use((req, res) => {

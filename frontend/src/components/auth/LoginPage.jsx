@@ -15,6 +15,7 @@ import { Button } from '../ui/button.jsx';
 import { Input } from '../ui/input.jsx';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/services/auth.api';
+import { systemApi } from '@/services/system.api';
 
 const SUPPORTED_FORMATS = [
   { label: 'Excel', className: 'bg-info-bg text-info-text' },
@@ -106,7 +107,7 @@ function ModeTabs({ mode, onChange }) {
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [mode, setMode] = useState('user');
+  const [mode, setMode] = useState(location.state?.mode === 'admin' ? 'admin' : 'user');
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -115,6 +116,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [recoveryVisible, setRecoveryVisible] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
 
   const registeredRedirect = location.state?.from || '/converter';
 
@@ -147,9 +149,36 @@ export function LoginPage() {
         setError('Incorrect admin email or password.');
       }
     } catch (loginError) {
-      setError(loginError.message || 'Admin sign-in failed. Please try again.');
+      if (loginError.status === 423) {
+        navigate('/admin/lockout', { replace: true });
+        return;
+      }
+      const remaining = loginError.data?.remainingAttempts;
+      setError(
+        loginError.status === 401 && typeof remaining === 'number'
+          ? `Incorrect admin email or password. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before a 15-minute lockout.`
+          : loginError.message || 'Admin sign-in failed. Please try again.',
+      );
     } finally {
       setAdminLoading(false);
+    }
+  }
+
+  async function handleRecoveryRequest() {
+    setError('');
+    setRecoveryVisible(false);
+    if (!email.trim()) {
+      setError('Enter the admin email first, then request a recovery link.');
+      return;
+    }
+    setRecoveryLoading(true);
+    try {
+      await systemApi.requestAdminRecovery(email.trim());
+      setRecoveryVisible(true);
+    } catch (recoveryError) {
+      setError(recoveryError.message || 'Recovery request could not be sent.');
+    } finally {
+      setRecoveryLoading(false);
     }
   }
 
@@ -277,10 +306,11 @@ export function LoginPage() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => setRecoveryVisible(true)}
-                      className="text-[12.5px] font-medium text-brand-primary hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                      onClick={handleRecoveryRequest}
+                      disabled={recoveryLoading}
+                      className="text-[12.5px] font-medium text-brand-primary hover:text-brand-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-60"
                     >
-                      Forgot Password?
+                      {recoveryLoading ? 'Sending…' : 'Forgot Password?'}
                     </button>
                   </div>
                   <div className="relative">
@@ -317,7 +347,7 @@ export function LoginPage() {
                     className="flex items-center gap-2 rounded-lg bg-brand-primary-soft px-3 py-2 text-[12.5px] text-brand-primary"
                   >
                     <Mail className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-                    <span>Recovery instructions sent to the sole Admin email if configured.</span>
+                    <span>If this email is registered, a single-use recovery link valid for 15 minutes has been sent.</span>
                   </div>
                 ) : null}
 

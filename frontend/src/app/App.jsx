@@ -6,6 +6,13 @@ import { ConversionProgress } from '../components/converter/ConversionProgress.j
 import { ErrorReport } from '../components/converter/ErrorReport.jsx';
 import { UserHistory } from '../components/history/UserHistory.jsx';
 import { AdminDashboard } from '../components/admin/AdminDashboard.jsx';
+import { AdminUsersPage } from '../components/admin/AdminUsersPage.jsx';
+import { AdminConversionsPage } from '../components/admin/AdminConversionsPage.jsx';
+import { AdminSecurityPage } from '../components/admin/AdminSecurityPage.jsx';
+import { AdminSettingsPage } from '../components/admin/AdminSettingsPage.jsx';
+import { AdminLockoutPage } from '../components/admin/AdminLockoutPage.jsx';
+import { AdminLayout } from '../components/admin/AdminLayout.jsx';
+import { AdminGuard } from '../components/admin/AdminGuard.jsx';
 import { LoginPage } from '../components/auth/LoginPage.jsx';
 import { AuthGuard } from '../components/auth/AuthGuard.jsx';
 import { AboutPage } from '../components/about/AboutPage.jsx';
@@ -29,7 +36,8 @@ function HomePage() {
 function AppShell() {
   const { pathname } = useLocation();
   // Figma sign_in uses shell-type=web_blank — no navbar/footer, full-bleed canvas.
-  const isBlank = pathname === '/login';
+  // The admin console also owns its 100%-height sidebar shell on /admin/*.
+  const isBlank = pathname === '/login' || pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -68,7 +76,21 @@ function AppShell() {
               </AuthGuard>
             }
           />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/lockout" element={<AdminLockoutPage />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminGuard>
+                <AdminLayout />
+              </AdminGuard>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="conversions" element={<AdminConversionsPage />} />
+            <Route path="security" element={<AdminSecurityPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
+          </Route>
         </Routes>
       </main>
 

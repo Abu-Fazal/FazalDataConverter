@@ -164,6 +164,13 @@ class JobManager {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  /**
+   * Admin-only: every job across all owners, newest first (metadata access, PRD §8.2).
+   */
+  listAllJobs() {
+    return [...this.jobs.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
   hasActiveJobForSource(filePath) {
     return [...this.jobs.values()].some(
       (job) => job.tempFilePath === filePath && ['pending', 'processing'].includes(job.status),

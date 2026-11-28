@@ -1,37 +1,49 @@
-import { ArrowUp, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { Card } from '../ui/card.jsx';
+import { cn } from '@/lib/utils';
 
-const variants = {
-  users: { icon: ArrowUp, color: 'text-brand-primary', bg: 'bg-brand-primary-soft' },
-  conversions: { icon: CheckCircle2, color: 'text-success-text', bg: 'bg-success-bg' },
-  failure: { icon: AlertCircle, color: 'text-error-text', bg: 'bg-error-bg' },
-  status: { icon: Clock, color: 'text-processing-text', bg: 'bg-processing-bg' },
+const tones = {
+  brand: { icon: 'text-brand-primary', bg: 'bg-brand-primary-soft' },
+  success: { icon: 'text-success-text', bg: 'bg-success-bg' },
+  warning: { icon: 'text-warning-text', bg: 'bg-warning-bg' },
+  error: { icon: 'text-error-text', bg: 'bg-error-bg' },
+  info: { icon: 'text-info-text', bg: 'bg-info-bg' },
+  neutral: { icon: 'text-text-secondary', bg: 'bg-surface-secondary' },
 };
 
 /**
- * Admin metric card (Chunk 5.5).
- * Displays a key figure with an icon, label, value, and optional delta.
+ * Admin metric card (PRD §8.1). Every figure shown is computed from live data.
  */
-export function MetricCard({ title, value, delta, type = 'users' }) {
-  const Icon = variants[type]?.icon || ArrowUp;
-  const color = variants[type]?.color || 'text-text-primary';
-  const bg = variants[type]?.bg || 'bg-surface-secondary';
+export function MetricCard({ label, value, hint, icon: Icon, tone = 'brand', delta, className }) {
+  const style = tones[tone] || tones.brand;
+  const trend = typeof delta === 'number' ? delta : null;
+  const TrendIcon = trend == null || trend === 0 ? Minus : trend > 0 ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-text-secondary">{title}</p>
-          <p className="text-2xl font-bold text-text-primary tabular-nums">{value}</p>
-          {delta != null && (
-            <p className={`text-xs font-medium ${delta >= 0 ? 'text-success-text' : 'text-error-text'}`}>
-              {delta >= 0 ? '+' : ''}{delta}
+    <Card className={cn('p-5', className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-[0.06em] text-text-muted">{label}</p>
+          <p className="mt-1.5 text-2xl font-bold tabular-nums tracking-tight text-text-primary">{value}</p>
+          {hint ? <p className="mt-1 text-xs text-text-secondary">{hint}</p> : null}
+          {trend != null ? (
+            <p
+              className={cn(
+                'mt-2 inline-flex items-center gap-1 text-label-sm',
+                trend > 0 ? 'text-success-text' : trend < 0 ? 'text-error-text' : 'text-text-muted',
+              )}
+            >
+              <TrendIcon size={13} aria-hidden="true" />
+              {trend > 0 ? '+' : ''}
+              {trend} today vs yesterday
             </p>
-          )}
+          ) : null}
         </div>
-        <div className={`p-2 rounded-lg ${bg}`}>
-          <Icon className={`w-5 h-5 ${color}`} aria-hidden="true" />
-        </div>
+        {Icon ? (
+          <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', style.bg)}>
+            <Icon className={cn('h-5 w-5', style.icon)} aria-hidden="true" />
+          </span>
+        ) : null}
       </div>
     </Card>
   );

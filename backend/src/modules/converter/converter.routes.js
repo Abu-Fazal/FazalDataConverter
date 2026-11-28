@@ -16,6 +16,7 @@ import { inspectWorkbook } from './workbookInspector.js';
 import { runConversionJob } from './jobProcessor.js';
 import { jobManager } from '../../services/jobManager.js';
 import { fileVault } from '../../services/fileVault.js';
+import { adminStore } from '../../services/adminStore.js';
 import { verifyConversionOutput } from '../../utils/outputVerifier.js';
 import { config } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
@@ -95,6 +96,16 @@ router.post('/upload', (req, res, next) => {
 
     if (!req.file) {
       return res.status(400).json({ error: 'NO_FILE_UPLOADED', message: 'Please provide a file to upload.' });
+    }
+
+    // Admin-configurable per-file cap, never above the hard 50 MB limit (PRD §3.4).
+    const maxBytes = adminStore.getSettings().maxFileSizeMb * 1024 * 1024;
+    if (req.file.size > maxBytes) {
+      await purgeTempFile(req.file.path);
+      return res.status(413).json({
+        error: 'FILE_TOO_LARGE',
+        message: `The uploaded file exceeds the current ${adminStore.getSettings().maxFileSizeMb} MB maximum file size limit.`,
+      });
     }
 
     const ext = path.extname(req.file.originalname);
